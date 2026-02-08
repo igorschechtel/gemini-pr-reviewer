@@ -26,7 +26,9 @@ Focus on ensuring reliability and maximizing test coverage before the v0.1.0 rel
 ### Phase 2: Context & Insight Quality
 Focus on optimizing *how* we present data to the model to extract better reviews.
 - [ ] **Golden Data Suite**: Create `benchmarks/` with static diffs to measure consistency.
-- [ ] **Context Optimization**: Experiment with context strategies (full file vs. chunks, dependency graphs) to improve signal-to-noise.
+- [ ] **Context Optimization**:
+    - [x] Implemented PR Goal generation from commits and linked issues.
+    - [ ] Experiment with context strategies (full file vs. chunks, dependency graphs) to improve signal-to-noise.
 - [ ] **System Prompt Architecture**: Refactor `src/prompt.ts` to separate "Role" from "Data".
     - [ ] **Modular Personas**: Allow swapping system prompts (e.g., "Security Auditor" vs "Code Stylist").
     - [ ] **Structured Output**: Enforce JSON schemas via system instructions for robustness.

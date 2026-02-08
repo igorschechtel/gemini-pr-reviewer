@@ -90,7 +90,14 @@ describe('integration pipeline', () => {
           summary: 'No cross-file issues detected.',
           findings: [],
         }),
+        generatePRGoal: async () => ({
+          goal: 'Test Goal',
+          context: 'Test Context',
+        }),
       }),
+      fetchPullRequestCommits: async () => [],
+      fetchIssue: async () => ({ title: 'Test Issue', body: 'Test Body' }),
+      extractLinkedIssueRefs: () => [],
     };
 
     const result = await run({

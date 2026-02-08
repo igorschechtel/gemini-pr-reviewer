@@ -4,7 +4,10 @@ import { GeminiClient } from '../src/gemini.js';
 import {
   addCommentReaction,
   createReview,
+  extractLinkedIssueRefs,
+  fetchIssue,
   fetchPullRequest,
+  fetchPullRequestCommits,
   fetchPullRequestDiff,
   type PRDetails,
   postIssueComment,
@@ -20,7 +23,7 @@ function applySafetyLimits(config: Config): Config {
   const maxFiles = clamp(config.maxFiles, 1);
   const maxHunksPerFile = clamp(config.maxHunksPerFile, 1);
   const maxLinesPerHunk = clamp(config.maxLinesPerHunk, 50);
-  const globalMaxLines = clamp(config.globalMaxLines, 200);
+  const globalMaxLines = clamp(config.globalMaxLines, 2000); // Increased for rich context
 
   if (
     maxFiles !== config.maxFiles ||
@@ -61,6 +64,16 @@ async function fetchLocalPullRequest(
   pullNumber: number,
   token: string,
 ): Promise<PRDetails> {
+  const prJsonPath = process.env.LOCAL_PR_JSON_PATH;
+  if (prJsonPath) {
+    try {
+      const raw = await readFile(prJsonPath, 'utf-8');
+      return JSON.parse(raw) as PRDetails;
+    } catch (e) {
+      console.warn(`Failed to load PR JSON from ${prJsonPath}: ${(e as Error).message}`);
+    }
+  }
+
   const title = process.env.LOCAL_PR_TITLE || 'Local PR Title';
   const body = process.env.LOCAL_PR_BODY || 'Local PR Description';
 
@@ -85,6 +98,11 @@ async function fetchLocalPullRequest(
 }
 
 async function main(): Promise<void> {
+  // Ensure DRY_RUN is set before loading config to avoid GITHUB_TOKEN requirement
+  if (process.env.DRY_RUN === undefined) {
+    process.env.DRY_RUN = 'true';
+  }
+
   const baseConfig = loadConfig();
   const config = applySafetyLimits(baseConfig);
 
@@ -129,6 +147,34 @@ async function main(): Promise<void> {
       await addCommentReaction(owner, repo, commentId, reaction, token);
     },
     createGeminiClient: (apiKey, modelName) => new GeminiClient(apiKey, modelName),
+    fetchPullRequestCommits: async () => {
+      const path = process.env.LOCAL_COMMITS_JSON_PATH;
+      if (path) {
+        try {
+          const raw = await readFile(path, 'utf-8');
+          return JSON.parse(raw) as string[];
+        } catch (error) {
+          console.warn(`Failed to load commits from ${path}`);
+        }
+      }
+      return ['feat: mock commit'];
+    },
+    extractLinkedIssueRefs: (body: string) => {
+      return extractLinkedIssueRefs(body);
+    },
+    fetchIssue: async (_owner, _repo, issueNumber) => {
+      const path = process.env.LOCAL_ISSUES_JSON_PATH;
+      if (path) {
+        try {
+          const raw = await readFile(path, 'utf-8');
+          const issues = JSON.parse(raw) as Record<string, { title: string; body: string }>;
+          if (issues[issueNumber]) return issues[issueNumber];
+        } catch (error) {
+          console.warn(`Failed to load issue #${issueNumber} from ${path}`);
+        }
+      }
+      return { title: `Mock Issue #${issueNumber}`, body: 'Mock body' };
+    },
   };
 
   const env = {
