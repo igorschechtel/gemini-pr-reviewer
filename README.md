@@ -1,6 +1,6 @@
 # Gemini PR Reviewer
 
-![CI](https://github.com/igorschechtel/gemini-pr-reviewer/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/igorschechtel/gemini-pr-reviewer/actions/workflows/checks.yml/badge.svg)
 ![Version](https://img.shields.io/github/v/tag/igorschechtel/gemini-pr-reviewer?label=version)
 ![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=flat&logo=bun&logoColor=white)
 ![Gemini](https://img.shields.io/badge/Powered%20by-Gemini-4285F4.svg?style=flat&logo=googlegemini&logoColor=white)
@@ -53,6 +53,12 @@ Open a Pull Request and comment:
 ```text
 /gemini-review
 ```
+
+<br />
+
+### 💡 Why this instead of paid tools?
+
+Services like CodeRabbit or Copilot are great but often expensive ($20+/user/month), process your code on third-party servers, and limit free usage on private repos. **Gemini PR Reviewer** runs directly in your GitHub Action, giving you a privacy-first, highly configurable, and significantly cheaper alternative that works on **both public and private repositories** without subscription limits.
 
 <br />
 
@@ -124,6 +130,12 @@ If you want to contribute or run the reviewer locally:
     ```bash
     bun run scripts/local_e2e.ts
     ```
+
+<br />
+
+## 📸 Example
+
+![Gemini PR Reviewer in Action](assets/screenshot.png)
 
 <br />
 

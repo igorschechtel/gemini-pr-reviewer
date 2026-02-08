@@ -125,7 +125,10 @@ export class GeminiClient {
 
   constructor(apiKey: string, modelName: string) {
     const genAI = new GoogleGenerativeAI(apiKey);
-    this.model = genAI.getGenerativeModel({ model: modelName });
+    this.model = genAI.getGenerativeModel({
+      model: modelName,
+      generationConfig: { responseMimeType: 'application/json' },
+    });
   }
 
   async review(prompt: string): Promise<AIReview[]> {
