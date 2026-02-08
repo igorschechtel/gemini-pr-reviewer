@@ -1,11 +1,50 @@
 {
   "compilerOptions": {
+    /* Projects */
+    "incremental": true,
+
+    /* Language and Environment */
     "target": "ES2022",
-    "module": "ES2022",
-    "moduleResolution": "Bundler",
-    "types": ["bun-types"],
-    "strict": false,
-    "esModuleInterop": true,
-    "skipLibCheck": true
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    /* Modules */
+    "module": "nodenext",
+    "allowImportingTsExtensions": true,
+    "types": ["bun"],
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "nodenext",
+    "isolatedModules": true,
+
+    /* JavaScript Support */
+    "allowJs": true,
+
+    /* Emit */
+    "declaration": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "removeComments": true,
+    "noEmit": true,
+
+    /* Interop Constraints */
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": false,
+
+    /* Type Checking */
+    "strict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "strictBindCallApply": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    // Path aliases
+    "paths": {
+      "~/*": ["./src/*"]
+    }
   }
 }

@@ -1,15 +1,15 @@
-import { readFile } from "node:fs/promises";
-import { loadConfig, type Config } from "../src/config";
-import { run, loadEventPayload, type Dependencies } from "../src/index";
+import { readFile } from 'node:fs/promises';
+import { type Config, loadConfig } from '../src/config.js';
+import { GeminiClient } from '../src/gemini.js';
 import {
+  createReview,
   fetchPullRequest,
   fetchPullRequestDiff,
-  createReview,
-  postIssueComment,
   type PRDetails,
-  type ReviewComment
-} from "../src/github";
-import { GeminiClient } from "../src/gemini";
+  postIssueComment,
+  type ReviewComment,
+} from '../src/github.js';
+import { type Dependencies, loadEventPayload, run } from '../src/index.js';
 
 function clamp(value: number, max: number): number {
   return Math.min(value, max);
@@ -28,7 +28,7 @@ function applySafetyLimits(config: Config): Config {
     globalMaxLines !== config.globalMaxLines
   ) {
     console.log(
-      `Applying safe limits: MAX_FILES=${maxFiles}, MAX_HUNKS_PER_FILE=${maxHunksPerFile}, MAX_LINES_PER_HUNK=${maxLinesPerHunk}, GLOBAL_MAX_LINES=${globalMaxLines}`
+      `Applying safe limits: MAX_FILES=${maxFiles}, MAX_HUNKS_PER_FILE=${maxHunksPerFile}, MAX_LINES_PER_HUNK=${maxLinesPerHunk}, GLOBAL_MAX_LINES=${globalMaxLines}`,
     );
   }
 
@@ -37,17 +37,17 @@ function applySafetyLimits(config: Config): Config {
     maxFiles,
     maxHunksPerFile,
     maxLinesPerHunk,
-    globalMaxLines
+    globalMaxLines,
   };
 }
 
 function normalizeBoolean(value: string | undefined, fallback: boolean): boolean {
   if (value === undefined) return fallback;
-  return value.toLowerCase() === "true";
+  return value.toLowerCase() === 'true';
 }
 
 async function loadDiffFromFile(diffPath: string): Promise<string> {
-  const diff = await readFile(diffPath, "utf-8");
+  const diff = await readFile(diffPath, 'utf-8');
   if (!diff.trim()) {
     throw new Error(`Diff file is empty: ${diffPath}`);
   }
@@ -58,10 +58,10 @@ async function fetchLocalPullRequest(
   owner: string,
   repo: string,
   pullNumber: number,
-  token: string
+  token: string,
 ): Promise<PRDetails> {
-  const title = process.env.LOCAL_PR_TITLE || "Local PR";
-  const body = process.env.LOCAL_PR_BODY || "Local PR body";
+  const title = process.env.LOCAL_PR_TITLE || 'Local PR';
+  const body = process.env.LOCAL_PR_BODY || 'Local PR body';
 
   if (process.env.LOCAL_PR_TITLE || process.env.LOCAL_PR_BODY) {
     return {
@@ -70,8 +70,8 @@ async function fetchLocalPullRequest(
       pullNumber,
       title,
       body,
-      headSha: "local",
-      baseSha: "local"
+      headSha: 'local',
+      baseSha: 'local',
     };
   }
 
@@ -84,7 +84,7 @@ async function main(): Promise<void> {
 
   const eventPath = process.env.LOCAL_EVENT_PATH || process.env.GITHUB_EVENT_PATH;
   if (!eventPath) {
-    throw new Error("LOCAL_EVENT_PATH or GITHUB_EVENT_PATH is required for local E2E runs");
+    throw new Error('LOCAL_EVENT_PATH or GITHUB_EVENT_PATH is required for local E2E runs');
   }
 
   const diffPath = process.env.LOCAL_DIFF_PATH;
@@ -101,7 +101,7 @@ async function main(): Promise<void> {
     },
     createReview: async (pr, token, body, comments) => {
       if (dryRun) {
-        console.log("DRY_RUN enabled: skipping createReview");
+        console.log('DRY_RUN enabled: skipping createReview');
         logReviewPreview(body, comments);
         return;
       }
@@ -109,19 +109,19 @@ async function main(): Promise<void> {
     },
     postIssueComment: async (pr, token, body) => {
       if (dryRun) {
-        console.log("DRY_RUN enabled: skipping postIssueComment");
+        console.log('DRY_RUN enabled: skipping postIssueComment');
         console.log(body);
         return;
       }
       await postIssueComment(pr, token, body);
     },
-    createGeminiClient: (apiKey, modelName) => new GeminiClient(apiKey, modelName)
+    createGeminiClient: (apiKey, modelName) => new GeminiClient(apiKey, modelName),
   };
 
   const env = {
     ...process.env,
     GITHUB_EVENT_PATH: eventPath,
-    GITHUB_EVENT_NAME: process.env.GITHUB_EVENT_NAME || "issue_comment"
+    GITHUB_EVENT_NAME: process.env.GITHUB_EVENT_NAME || 'issue_comment',
   };
 
   const result = await run({ config, env, deps });
@@ -131,9 +131,9 @@ async function main(): Promise<void> {
 }
 
 function logReviewPreview(body: string, comments: ReviewComment[]): void {
-  console.log("--- Review Summary ---");
+  console.log('--- Review Summary ---');
   console.log(body);
-  console.log("--- Inline Comments ---");
+  console.log('--- Inline Comments ---');
   for (const comment of comments) {
     console.log(`- ${comment.path} @ ${comment.position}: ${comment.body}`);
   }

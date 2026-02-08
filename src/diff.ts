@@ -1,9 +1,9 @@
-import parseDiff from "parse-diff";
-import { minimatch } from "minimatch";
+import { minimatch } from 'minimatch';
+import parseDiff from 'parse-diff';
 
 export type DiffLine = {
   content: string;
-  type: "add" | "del" | "normal";
+  type: 'add' | 'del' | 'normal';
   oldNumber?: number;
   newNumber?: number;
 };
@@ -42,26 +42,29 @@ export type DiffParseOptions = {
 export function parseUnifiedDiff(diffText: string): DiffFile[] {
   if (!diffText) return [];
 
-  const files = parseDiff(diffText) as any[];
+  const files = parseDiff(diffText);
   const results: DiffFile[] = [];
 
   for (const file of files) {
     const rawPath: string | undefined = file.to || file.from;
     if (!rawPath) continue;
-    const path = rawPath.replace(/^b\//, "").replace(/^a\//, "");
+    const path = rawPath.replace(/^b\//, '').replace(/^a\//, '');
 
     const hunks: DiffHunk[] = [];
     const chunks = file.chunks || [];
 
     for (const chunk of chunks) {
-      const header = (chunk.content || "").trimEnd();
+      const header = (chunk.content || '').trimEnd();
       const changes = chunk.changes || [];
-      const lines: DiffLine[] = changes.map((change: any) => ({
-        content: change.content,
-        type: change.type,
-        oldNumber: change.ln1 ?? (change.type === "del" ? change.ln : undefined),
-        newNumber: change.ln2 ?? (change.type === "add" ? change.ln : undefined)
-      }));
+      const lines: DiffLine[] = changes.map((change) => {
+        const c = change as { ln1?: number; ln2?: number; ln?: number };
+        return {
+          content: change.content,
+          type: change.type,
+          oldNumber: c.ln1 ?? (change.type === 'del' ? c.ln : undefined),
+          newNumber: c.ln2 ?? (change.type === 'add' ? c.ln : undefined),
+        };
+      });
 
       if (lines.length > 0) {
         hunks.push({ header, lines });
@@ -81,12 +84,16 @@ export function filterDiffFiles(files: DiffFile[], options: DiffParseOptions): D
 
   for (const file of files) {
     if (options.includePatterns.length > 0) {
-      const matchesInclude = options.includePatterns.some((pattern) => minimatch(file.path, pattern));
+      const matchesInclude = options.includePatterns.some((pattern) =>
+        minimatch(file.path, pattern),
+      );
       if (!matchesInclude) continue;
     }
 
     if (options.excludePatterns.length > 0) {
-      const matchesExclude = options.excludePatterns.some((pattern) => minimatch(file.path, pattern));
+      const matchesExclude = options.excludePatterns.some((pattern) =>
+        minimatch(file.path, pattern),
+      );
       if (matchesExclude) continue;
     }
 
@@ -113,7 +120,7 @@ export function buildNumberedPatch(file: DiffFile, options: DiffParseOptions): N
       position,
       reviewable: false,
       hunkIndex,
-      content: hunk.header
+      content: hunk.header,
     });
     hunkPositions.set(hunkIndex, [position]);
 
@@ -123,14 +130,14 @@ export function buildNumberedPatch(file: DiffFile, options: DiffParseOptions): N
       lines.push(`${position} | ${line.content}`);
 
       const reviewable =
-        (line.type === "add" || line.type === "normal") &&
-        !line.content.startsWith("\\ No newline");
+        (line.type === 'add' || line.type === 'normal') &&
+        !line.content.startsWith('\\ No newline');
 
       lineMeta.set(position, {
         position,
         reviewable,
         hunkIndex,
-        content: line.content
+        content: line.content,
       });
 
       const positions = hunkPositions.get(hunkIndex) || [];
@@ -145,9 +152,9 @@ export function buildNumberedPatch(file: DiffFile, options: DiffParseOptions): N
 export function buildGlobalDiff(
   files: DiffFile[],
   options: DiffParseOptions,
-  maxLines: number
+  maxLines: number,
 ): string {
-  if (maxLines <= 0) return "";
+  if (maxLines <= 0) return '';
 
   const lines: string[] = [];
   const pushLine = (line: string): boolean => {
@@ -161,22 +168,22 @@ export function buildGlobalDiff(
 
     const hunks = file.hunks.slice(0, options.maxHunksPerFile);
     for (const hunk of hunks) {
-      if (!pushLine(hunk.header)) return lines.join("\n");
+      if (!pushLine(hunk.header)) return lines.join('\n');
 
       const limitedLines = hunk.lines.slice(0, options.maxLinesPerHunk);
       for (const line of limitedLines) {
-        if (!pushLine(line.content)) return lines.join("\n");
+        if (!pushLine(line.content)) return lines.join('\n');
       }
     }
   }
 
-  return lines.join("\n");
+  return lines.join('\n');
 }
 
 export function adjustToReviewablePosition(
   lineNumber: number,
   lineMeta: Map<number, LineMeta>,
-  hunkPositions: Map<number, number[]>
+  hunkPositions: Map<number, number[]>,
 ): number | null {
   const meta = lineMeta.get(lineNumber);
   if (!meta) return null;

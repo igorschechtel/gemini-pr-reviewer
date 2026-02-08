@@ -27,4 +27,4 @@ jobs:
           GEMINI_MODEL: gemini-2.5-flash
           REVIEW_MODE: standard
           REVIEW_INSTRUCTIONS: "Focus on correctness and security. Keep feedback concise."
-          EXCLUDE: "*.md,*.txt"
+          EXCLUDE: "*.md, *.txt, *.lock, *.json"
