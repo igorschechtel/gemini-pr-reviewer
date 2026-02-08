@@ -97,7 +97,7 @@ describe('integration pipeline', () => {
       }),
       fetchPullRequestCommits: async () => [],
       fetchIssue: async () => ({ title: 'Test Issue', body: 'Test Body' }),
-      extractLinkedIssueRefs: () => [],
+      extractLinkedIssueRefs: () => [{ owner: 'acme', repo: 'rocket', issueNumber: 123 }],
     };
 
     const result = await run({

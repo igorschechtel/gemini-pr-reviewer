@@ -21,7 +21,7 @@ function applySafetyLimits(config: Config): Config {
   const maxFiles = clamp(config.maxFiles, 1);
   const maxHunksPerFile = clamp(config.maxHunksPerFile, 1);
   const maxLinesPerHunk = clamp(config.maxLinesPerHunk, 50);
-  const globalMaxLines = clamp(config.globalMaxLines, 2000); // Increased for rich context
+  const globalMaxLines = clamp(config.globalMaxLines, 500); // Increased for rich context, but kept safe
 
   if (
     maxFiles !== config.maxFiles ||
@@ -158,7 +158,8 @@ async function main(): Promise<void> {
       return ['feat: mock commit'];
     },
     extractLinkedIssueRefs: (body: string) => {
-      return extractLinkedIssueRefs(body);
+      const parts = (process.env.GITHUB_REPOSITORY || 'owner/repo').split('/');
+      return extractLinkedIssueRefs(body, parts[0] || 'owner', parts[1] || 'repo');
     },
     fetchIssue: async (_owner, _repo, issueNumber) => {
       const path = process.env.LOCAL_ISSUES_JSON_PATH;

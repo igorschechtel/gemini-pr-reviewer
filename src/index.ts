@@ -215,13 +215,15 @@ export async function run(params: {
 
   console.log('Fetching PR context...');
   const commits = await deps.fetchPullRequestCommits(owner, repo, pullNumber, config.githubToken);
-  const issueRefs = deps.extractLinkedIssueRefs(pr.body);
-  const linkedIssues: Array<{ title: string; body: string }> = [];
+  const issueRefs = deps.extractLinkedIssueRefs(pr.body, owner, repo);
 
-  for (const ref of issueRefs) {
-    const issue = await deps.fetchIssue(ref.owner, ref.repo, ref.issueNumber, config.githubToken);
-    if (issue.title) linkedIssues.push(issue);
-  }
+  const linkedIssues = (
+    await Promise.all(
+      issueRefs.map((ref) =>
+        deps.fetchIssue(ref.owner, ref.repo, ref.issueNumber, config.githubToken),
+      ),
+    )
+  ).filter((issue) => issue.title);
 
   let prGoal: PRGoal | undefined;
   try {
