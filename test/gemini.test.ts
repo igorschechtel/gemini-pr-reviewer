@@ -40,9 +40,23 @@ describe('Gemini Response Parsing', () => {
       expect(extractJson(input)).toBe('{"foo": "bar"}');
     });
 
-    test('handles valid json inside text without code blocks', () => {
-      const input = 'Some text {"foo": "bar"} more text';
-      expect(extractJson(input)).toBe('{"foo": "bar"}');
+    test('extracts json from noisy chatty response', () => {
+      const input = `
+        Here is the analysis of your code.
+        Overall it looks good, but there are some issues.
+        {
+          "reviews": [
+            { "lineNumber": 10, "reviewComment": "Fix this" }
+          ]
+        }
+        Let me know if you need more help!
+      `;
+
+      // actually, let's just parse it to verify
+      const extracted = extractJson(input);
+      const parsed = JSON.parse(extracted);
+      expect(parsed.reviews).toHaveLength(1);
+      expect(parsed.reviews[0].lineNumber).toBe(10);
     });
   });
 
