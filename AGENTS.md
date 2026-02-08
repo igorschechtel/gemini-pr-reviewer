@@ -40,6 +40,19 @@ The reviewer operates in two passes:
 1. **Global Pass**: Analyzes the PR title, description, and a summarized diff to understand the overall context and cross-file implications.
 2. **Inline Pass**: Analyzes each file individually, using the global summary as context to provide specific inline comments.
 
+## 📊 Quality & Benchmarking
+ 
+We cannot improve the AI model itself, but we can drastically improve its output by optimizing **what we send it (Context)** and **how we ask (Prompting)**.
+ 
+- **The Variable is Us**: Benchmarks test our *context construction* and *prompt engineering*, not Gemini's intelligence.
+- **Golden Set**: When modifying logic, run against `benchmarks/`. If the model stops finding a bug, it means *we* failed to provide the right context or instructions.
+- **Metric**: Maximize **Insight per Token Sent**. We want to provide the leanest, most relevant context that produces the best review.
+ 
+### Prompt Engineering Guidelines
+- **Separation of Concerns**: Treat the **System Prompt** (Who you are + Rules) as distinct from the **User Context** (The Diff + Metadata).
+- **Modular Personas**: Don't hardcode "You are a senior engineer." Allow the persona to be swapped (e.g., for a "Security Only" pass).
+- **Template-Based**: Use templates for prompts to ensure consistency and allow easier A/B testing of instructions.
+
 ## 📝 Coding Standards
 
 - **Files**: Use kebab-case for filenames.
