@@ -37,12 +37,17 @@ function parseBoolean(value: string | undefined, fallback: boolean): boolean {
 export function loadConfig(): Config {
   const githubToken = process.env.GITHUB_TOKEN || '';
   const geminiApiKey = process.env.GEMINI_API_KEY || '';
+  const dryRun = process.env.DRY_RUN === 'true';
 
-  if (!githubToken) {
-    throw new Error('Missing required env var: GITHUB_TOKEN');
-  }
   if (!geminiApiKey) {
     throw new Error('Missing required env var: GEMINI_API_KEY');
+  }
+
+  if (!githubToken && !dryRun) {
+    console.info(
+      "Tip: you can run this action with `DRY_RUN=true` and `GITHUB_TOKEN` won't be required.",
+    );
+    throw new Error('Missing required env var: GITHUB_TOKEN');
   }
 
   const reviewModeRaw = (process.env.REVIEW_MODE || 'standard').toLowerCase();
@@ -57,7 +62,7 @@ export function loadConfig(): Config {
   return {
     githubToken,
     geminiApiKey,
-    geminiModel: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+    geminiModel: process.env.GEMINI_MODEL || 'gemini-flash-latest',
     reviewMode,
     reviewInstructions: process.env.REVIEW_INSTRUCTIONS || '',
     commandTrigger: process.env.COMMAND_TRIGGER || '/gemini-review',

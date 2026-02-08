@@ -1,0 +1,12 @@
+{
+  "issue": {
+    "number": 1,
+    "pull_request": {}
+  },
+  "comment": {
+    "body": "/gemini-review"
+  },
+  "repository": {
+    "full_name": "igorschechtel/gemini-pr-reviewer"
+  }
+}

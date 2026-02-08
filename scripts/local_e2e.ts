@@ -60,10 +60,15 @@ async function fetchLocalPullRequest(
   pullNumber: number,
   token: string,
 ): Promise<PRDetails> {
-  const title = process.env.LOCAL_PR_TITLE || 'Local PR';
-  const body = process.env.LOCAL_PR_BODY || 'Local PR body';
+  const title = process.env.LOCAL_PR_TITLE || 'Local PR Title';
+  const body = process.env.LOCAL_PR_BODY || 'Local PR Description';
 
-  if (process.env.LOCAL_PR_TITLE || process.env.LOCAL_PR_BODY) {
+  // If we have local info or if we're in dry run and don't have a token, return local details
+  if (
+    process.env.LOCAL_PR_TITLE ||
+    process.env.LOCAL_PR_BODY ||
+    (process.env.DRY_RUN === 'true' && !token)
+  ) {
     return {
       owner,
       repo,

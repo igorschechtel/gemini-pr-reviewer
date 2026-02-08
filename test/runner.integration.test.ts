@@ -19,7 +19,7 @@ describe('integration pipeline', () => {
     const config: Config = {
       githubToken: 'ghs_test',
       geminiApiKey: 'gemini_test_key',
-      geminiModel: 'gemini-2.5-flash',
+      geminiModel: 'gemini-flash-latest',
       reviewMode: 'standard',
       reviewInstructions: '',
       commandTrigger: '/gemini-review',
