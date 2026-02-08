@@ -1,0 +1,16 @@
+{
+  "name": "gemini-pr-reviewer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "test": "bun test",
+    "e2e:local": "bun run scripts/local_e2e.ts"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.0",
+    "minimatch": "^9.0.5",
+    "parse-diff": "^0.11.1"
+  }
+}
