@@ -42,7 +42,6 @@ export function buildPrompt(params: {
   numberedDiff: string;
   globalSummary?: string;
   globalFindings?: string[];
-  prGoal?: { goal: string; context: string };
 }): string {
   const instructionsBlock = params.reviewInstructions
     ? `Review instructions from repository config:\n${params.reviewInstructions}\n`
@@ -64,10 +63,6 @@ export function buildPrompt(params: {
           .join('\n')
       : '';
 
-  const goalBlock = params.prGoal
-    ? `PR Goal: ${params.prGoal.goal}\nContext/Constraints: ${params.prGoal.context}\n`
-    : '';
-
   return [
     'You are a senior code reviewer.',
     'Provide the response in JSON format:',
@@ -82,7 +77,6 @@ export function buildPrompt(params: {
     `Review mode: ${params.reviewMode}. ${modeInstructions(params.reviewMode)}`,
     '',
     instructionsBlock,
-    goalBlock,
     globalContextBlock,
     `File: ${params.filePath}`,
     '',
@@ -105,14 +99,9 @@ export function buildGlobalPrompt(params: {
   reviewMode: ReviewMode;
   reviewInstructions: string;
   globalDiff: string;
-  prGoal?: { goal: string; context: string };
 }): string {
   const instructionsBlock = params.reviewInstructions
     ? `Review instructions from repository config:\n${params.reviewInstructions}\n`
-    : '';
-
-  const goalBlock = params.prGoal
-    ? `PR Goal: ${params.prGoal.goal}\nContext/Constraints: ${params.prGoal.context}\n`
     : '';
 
   return [
@@ -126,7 +115,6 @@ export function buildGlobalPrompt(params: {
     `Review mode: ${params.reviewMode}. ${modeInstructions(params.reviewMode)}`,
     '',
     instructionsBlock,
-    goalBlock,
     `Pull request title: ${params.prTitle}`,
     'Pull request description:',
     '---',
@@ -137,44 +125,5 @@ export function buildGlobalPrompt(params: {
     '```diff',
     params.globalDiff,
     '```',
-  ].join('\n');
-}
-
-export function buildGoalPrompt(params: {
-  prTitle: string;
-  prDescription: string;
-  commits: string[];
-  linkedIssues: Array<{ title: string; body: string }>;
-}): string {
-  const commitList =
-    params.commits.length > 0
-      ? params.commits.map((c) => `- ${c}`).join('\n')
-      : 'No commits provided.';
-  const issueList =
-    params.linkedIssues.length > 0
-      ? params.linkedIssues.map((i) => `Title: ${i.title}\nBody: ${i.body}`).join('\n\n')
-      : 'No linked issues.';
-
-  return [
-    'You are a senior technical lead.',
-    'Analyze the following PR context and generate a concise "PR Goal Statement".',
-    'This goal statement will be used to anchor the code review.',
-    '',
-    'Provide the response in JSON format:',
-    '{"goal": "<concise goal>", "context": "<additional context rules or constraints>"}',
-    '',
-    `PR Title: ${params.prTitle}`,
-    'PR Description:',
-    params.prDescription || 'No description provided.',
-    '',
-    'Commits:',
-    commitList,
-    '',
-    'Linked Issues:',
-    issueList,
-    '',
-    'Task:',
-    '1. Synthesize a "Goal" (1-2 sentences) describing the primary objective.',
-    '2. Extract identifying "Context" (key constraints, architectural patterns, or specific bug details) that the code reviewer must respect.',
   ].join('\n');
 }

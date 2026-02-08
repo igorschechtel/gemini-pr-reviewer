@@ -1,9 +1,0 @@
-{
-  "owner": "igorschechtel",
-  "repo": "gemini-pr-reviewer",
-  "pullNumber": 42,
-  "title": "feat: add user profile processor",
-  "body": "This PR adds the basic logic for processing user profiles.\n\nContext:\n- Relates to architectural standard: https://github.com/igorschechtel/gemini-pr-reviewer/issues/10\n- Fixes security concern: https://github.com/igorschechtel/gemini-pr-reviewer/issues/11",
-  "headSha": "mock-head",
-  "baseSha": "mock-base"
-}

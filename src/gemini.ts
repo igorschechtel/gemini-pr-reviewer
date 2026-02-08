@@ -12,11 +12,6 @@ export type AIGlobalReview = {
   findings: string[];
 };
 
-export type PRGoal = {
-  goal: string;
-  context: string;
-};
-
 export function sanitizeText(text: string): string {
   // Use new RegExp with string literal to avoid linting error for control characters
   // identifying control characters by their hex codes
@@ -125,19 +120,6 @@ export function parseGlobalReview(text: string): AIGlobalReview {
   }
 }
 
-export function parsePRGoal(text: string): PRGoal {
-  const jsonText = extractJson(text);
-
-  try {
-    const parsed = JSON.parse(jsonText);
-    const goal = typeof parsed?.goal === 'string' ? sanitizeText(parsed.goal) : '';
-    const context = typeof parsed?.context === 'string' ? sanitizeText(parsed.context) : '';
-    return { goal, context };
-  } catch {
-    return { goal: '', context: '' };
-  }
-}
-
 export class GeminiClient {
   private model: GenerativeModel;
 
@@ -161,12 +143,5 @@ export class GeminiClient {
     const response = result?.response;
     const text = response?.text ? response.text() : '';
     return parseGlobalReview(text || '');
-  }
-
-  async generatePRGoal(prompt: string): Promise<PRGoal> {
-    const result = await this.model.generateContent(prompt);
-    const response = result?.response;
-    const text = response?.text ? response.text() : '';
-    return parsePRGoal(text || '');
   }
 }
