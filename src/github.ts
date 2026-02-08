@@ -93,65 +93,6 @@ export async function fetchPullRequestDiff(
   );
 }
 
-export async function fetchPullRequestCommits(
-  owner: string,
-  repo: string,
-  pullNumber: number,
-  token: string,
-): Promise<string[]> {
-  const commits = await requestJson<{ commit: { message: string } }[]>(
-    `/repos/${owner}/${repo}/pulls/${pullNumber}/commits`,
-    token,
-  );
-  return commits.map((c) => c.commit.message);
-}
-
-export async function fetchIssue(
-  owner: string,
-  repo: string,
-  issueNumber: number,
-  token: string,
-): Promise<{ title: string; body: string }> {
-  try {
-    const issue = await requestJson<{ title: string; body: string }>(
-      `/repos/${owner}/${repo}/issues/${issueNumber}`,
-      token,
-    );
-    return { title: issue.title, body: issue.body || '' };
-  } catch (e) {
-    console.warn(`Failed to fetch issue #${issueNumber}: ${(e as Error).message}`);
-    return { title: '', body: '' };
-  }
-}
-
-export function extractLinkedIssueRefs(
-  body: string,
-): { owner: string; repo: string; issueNumber: number }[] {
-  const pattern = /https:\/\/github\.com\/([^/]+)\/([^/]+)\/issues\/(\d+)/g;
-  const matches = [...body.matchAll(pattern)];
-
-  const refs: { owner: string; repo: string; issueNumber: number }[] = [];
-  const seen = new Set<string>();
-
-  for (const match of matches) {
-    const owner = match[1] as string;
-    const repo = match[2] as string;
-    const numberStr = match[3] as string;
-
-    if (owner && repo && numberStr) {
-      const issueNumber = parseInt(numberStr, 10);
-      const key = `${owner}/${repo}#${issueNumber}`;
-
-      if (!seen.has(key)) {
-        seen.add(key);
-        refs.push({ owner, repo, issueNumber });
-      }
-    }
-  }
-
-  return refs;
-}
-
 export async function createReview(
   pr: PRDetails,
   token: string,
