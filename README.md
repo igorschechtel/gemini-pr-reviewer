@@ -133,6 +133,12 @@ If you want to contribute or run the reviewer locally:
 
 <br />
 
+## 📸 Example
+
+![Gemini PR Reviewer in Action](assets/screenshot.png)
+
+<br />
+
 ## 🛣️ Roadmap
 
 Planned improvements and milestones are tracked in [ROADMAP.md](ROADMAP.md).
