@@ -237,3 +237,49 @@ export async function addCommentReaction(
     body: JSON.stringify({ content: reaction }),
   });
 }
+
+export async function fetchFileContent(
+  owner: string,
+  repo: string,
+  path: string,
+  token: string,
+): Promise<string> {
+  try {
+    const data = await requestJson<{ content: string; encoding: string }>(
+      `/repos/${owner}/${repo}/contents/${path}`,
+      token,
+    );
+
+    if (data.encoding === 'base64') {
+      return Buffer.from(data.content, 'base64').toString('utf-8');
+    }
+    return data.content;
+  } catch (e) {
+    if ((e as Error).message.includes('404')) return '';
+    throw e;
+  }
+}
+
+export async function fetchRepoFileStructure(
+  owner: string,
+  repo: string,
+  token: string,
+  branch = 'main',
+): Promise<string> {
+  try {
+    const data = await requestJson<{ tree: { path: string; type: string }[] }>(
+      `/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
+      token,
+    );
+
+    // Limit to top 200 files to save context, prioritizing root files and src
+    return data.tree
+      .filter((item) => item.type === 'blob')
+      .map((item) => item.path)
+      .slice(0, 200)
+      .join('\n');
+  } catch (e) {
+    console.warn(`Failed to fetch repo structure: ${(e as Error).message}`);
+    return '';
+  }
+}

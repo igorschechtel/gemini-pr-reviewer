@@ -43,6 +43,7 @@ export function buildPrompt(params: {
   globalSummary?: string;
   globalFindings?: string[];
   prGoal?: { goal: string; context: string };
+  repoContext?: { readme: string; fileStructure: string };
 }): string {
   const instructionsBlock = params.reviewInstructions
     ? `Review instructions from repository config:\n${params.reviewInstructions}\n`
@@ -68,6 +69,20 @@ export function buildPrompt(params: {
     ? `PR Goal: ${params.prGoal.goal}\nContext/Constraints: ${params.prGoal.context}\n`
     : '';
 
+  const repoContextBlock = params.repoContext
+    ? [
+        'Repository Context:',
+        '---',
+        'README Snippet:',
+        params.repoContext.readme.slice(0, 1000), // Truncate to avoid context bloom
+        '---',
+        'File Structure (partial):',
+        params.repoContext.fileStructure.slice(0, 500),
+        '---',
+        '',
+      ].join('\n')
+    : '';
+
   return [
     'You are a senior code reviewer.',
     'Provide the response in JSON format:',
@@ -83,6 +98,7 @@ export function buildPrompt(params: {
     '',
     instructionsBlock,
     goalBlock,
+    repoContextBlock,
     globalContextBlock,
     `File: ${params.filePath}`,
     '',
@@ -106,6 +122,7 @@ export function buildGlobalPrompt(params: {
   reviewInstructions: string;
   globalDiff: string;
   prGoal?: { goal: string; context: string };
+  repoContext?: { readme: string; fileStructure: string };
 }): string {
   const instructionsBlock = params.reviewInstructions
     ? `Review instructions from repository config:\n${params.reviewInstructions}\n`
@@ -113,6 +130,20 @@ export function buildGlobalPrompt(params: {
 
   const goalBlock = params.prGoal
     ? `PR Goal: ${params.prGoal.goal}\nContext/Constraints: ${params.prGoal.context}\n`
+    : '';
+
+  const repoContextBlock = params.repoContext
+    ? [
+        'Repository Context:',
+        '---',
+        'README Snippet (truncated):',
+        params.repoContext.readme.slice(0, 2000),
+        '---',
+        'File Structure (top 200 files):',
+        params.repoContext.fileStructure,
+        '---',
+        '',
+      ].join('\n')
     : '';
 
   return [
@@ -127,6 +158,7 @@ export function buildGlobalPrompt(params: {
     '',
     instructionsBlock,
     goalBlock,
+    repoContextBlock,
     `Pull request title: ${params.prTitle}`,
     'Pull request description:',
     '---',

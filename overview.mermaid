@@ -1,0 +1,34 @@
+graph LR
+    %% Node Definitions
+    Trigger([PR Review triggered])
+    
+    subgraph ContextGathering [Context Gathering]
+        direction TB
+        PRData[Use PR data: name, description, commits, issues to resolve PR Goal]
+        RepoData[Use repo data: name, README, other files to understand project context]
+        Challenge1[<i>Challenge: which data to send to get a good overview of the project and PR</i>]
+        
+        PRData ~~~ RepoData
+        RepoData ~~~ Challenge1
+    end
+
+    subgraph GlobalReview [Global Review]
+        direction TB
+        GlobalStep[Send all/most files to get 'global review': PR summary, cross-file issues, etc]
+        Challenge2[<i>Challenge: what to do when the PR is too big? Which strategy to use to decide what's most important to send?</i>]
+        
+        GlobalStep ~~~ Challenge2
+    end
+
+    subgraph PerFileReview [Per-file Review]
+        direction TB
+        FileStep[Send chunks of files per review, aiming to reduce no. of requests but getting specific review feedback per line of code]
+        Challenge3[<i>Challenges: 1 how to include the info from previous steps in a way to isn't too much but also not too little? 2 how to make sure the response is directly mappable to inline comments?</i>]
+        
+        FileStep ~~~ Challenge3
+    end
+
+    %% Connections
+    Trigger --> ContextGathering
+    ContextGathering --> GlobalReview
+    GlobalReview --> PerFileReview

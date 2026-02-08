@@ -12,14 +12,17 @@ import {
   addCommentReaction,
   createReview,
   extractLinkedIssueRefs,
+  fetchFileContent,
   fetchIssue,
   fetchPullRequest,
   fetchPullRequestCommits,
   fetchPullRequestDiff,
+  fetchRepoFileStructure,
   postIssueComment,
   type ReviewComment,
 } from './github.js';
 import { buildGlobalPrompt, buildGoalPrompt, buildPrompt } from './prompt.js';
+import { pLimit } from './util.js';
 
 const MAX_COMMENTS = 100;
 
@@ -55,6 +58,8 @@ export type Dependencies = {
   fetchPullRequestCommits: typeof fetchPullRequestCommits;
   fetchIssue: typeof fetchIssue;
   extractLinkedIssueRefs: typeof extractLinkedIssueRefs;
+  fetchFileContent: typeof fetchFileContent;
+  fetchRepoFileStructure: typeof fetchRepoFileStructure;
 };
 
 export type RunResult = {
@@ -214,9 +219,13 @@ export async function run(params: {
   const gemini = deps.createGeminiClient(config.geminiApiKey, config.geminiModel);
 
   console.log('Fetching PR context...');
-  const commits = await deps.fetchPullRequestCommits(owner, repo, pullNumber, config.githubToken);
-  const issueRefs = deps.extractLinkedIssueRefs(pr.body, owner, repo);
+  const [commits, repoStructure, readme] = await Promise.all([
+    deps.fetchPullRequestCommits(owner, repo, pullNumber, config.githubToken),
+    deps.fetchRepoFileStructure(owner, repo, config.githubToken),
+    deps.fetchFileContent(owner, repo, 'README.md', config.githubToken),
+  ]);
 
+  const issueRefs = deps.extractLinkedIssueRefs(pr.body, owner, repo);
   const linkedIssues = (
     await Promise.all(
       issueRefs.map((ref) =>
@@ -247,22 +256,61 @@ export async function run(params: {
 
   if (config.globalReview) {
     const globalDiff = buildGlobalDiff(filteredFiles, diffOptions, config.globalMaxLines);
-    if (globalDiff) {
+    let finalGlobalDiff = globalDiff || '';
+
+    // Smart Context Logic: If global diff is too big, fallback to file list + critical files
+    if (globalDiff && globalDiff.length > 50000) {
+      // ~12k tokens, safe buffer for typical models
+      console.log('Global diff is too large, using smart context strategy...');
+      const fileList = filteredFiles.map((f) => f.path).join('\n');
+
+      // Heuristic: Critical files (configs, types, core logic)
+      const criticalFiles = filteredFiles.filter(
+        (f) =>
+          f.path.includes('package.json') ||
+          f.path.includes('tsconfig.json') ||
+          f.path.endsWith('.d.ts') ||
+          f.path.includes('src/index') ||
+          f.path.includes('src/config'),
+      );
+
+      const criticalDiffs = criticalFiles
+        .map((f) =>
+          buildNumberedPatch(f, {
+            includePatterns: [],
+            excludePatterns: [],
+            maxFiles: 1,
+            maxHunksPerFile: 5,
+            maxLinesPerHunk: 50,
+          }).lines.join('\n'),
+        )
+        .join('\n\n');
+
+      finalGlobalDiff = `Files changed:\n${fileList}\n\nCritical file diffs:\n${criticalDiffs}`;
+    }
+
+    if (finalGlobalDiff) {
       const globalPrompt = buildGlobalPrompt({
         prTitle: pr.title,
         prDescription: pr.body,
         reviewMode: config.reviewMode,
         reviewInstructions: config.reviewInstructions,
-        globalDiff,
+        globalDiff: finalGlobalDiff,
         prGoal,
+        repoContext: {
+          readme: readme || '',
+          fileStructure: repoStructure || '',
+        },
       });
 
-      console.log(`Analyzing global PR context (${globalDiff.split('\n').length} lines)`);
+      console.log(`Analyzing global PR context...`);
       globalReview = await gemini.reviewGlobal(globalPrompt);
     }
   }
 
-  for (const file of filteredFiles) {
+  const MAX_CONCURRENT_REVIEWS = 5;
+
+  const fileTasks = filteredFiles.map((file) => async () => {
     const numbered = buildNumberedPatch(file, {
       includePatterns: [],
       excludePatterns: [],
@@ -271,7 +319,7 @@ export async function run(params: {
       maxLinesPerHunk: config.maxLinesPerHunk,
     });
 
-    if (numbered.lines.length === 0) continue;
+    if (numbered.lines.length === 0) return;
 
     const prompt = buildPrompt({
       prTitle: pr.title,
@@ -283,6 +331,10 @@ export async function run(params: {
       globalSummary: globalReview?.summary,
       globalFindings: globalReview?.findings,
       prGoal,
+      repoContext: {
+        readme: readme || '',
+        fileStructure: repoStructure || '',
+      },
     });
 
     console.log(`Analyzing ${file.path} (${numbered.lines.length} diff lines)`);
@@ -308,11 +360,15 @@ export async function run(params: {
         position: adjustedPosition,
         body: review.reviewComment,
       });
-
-      if (comments.length >= MAX_COMMENTS) break;
+      // Note: breaking early from parallel tasks is harder, we'll let them run but truncate later if needed
     }
+  });
 
-    if (comments.length >= MAX_COMMENTS) break;
+  await pLimit(fileTasks, MAX_CONCURRENT_REVIEWS);
+
+  // Truncate to MAX_COMMENTS if we exceeded it during parallel processing
+  if (comments.length > MAX_COMMENTS) {
+    comments.length = MAX_COMMENTS;
   }
 
   const summary = summarizeComments(comments, allReviews, filteredFiles.length, globalReview);
@@ -343,6 +399,8 @@ async function main(): Promise<void> {
     postIssueComment,
     addCommentReaction,
     createGeminiClient: (apiKey, modelName) => new GeminiClient(apiKey, modelName),
+    fetchFileContent,
+    fetchRepoFileStructure,
   };
 
   await run({ config, env: process.env, deps });

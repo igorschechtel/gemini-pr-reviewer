@@ -21,7 +21,7 @@ Focus on ensuring reliability and maximizing test coverage before the v0.1.0 rel
     - [ ] Specialized filter behavior tests.
     - [x] Robust JSON parsing for Gemini responses.
 - [x] **Documentation**: Finalize README configuration tables and defaults.
-- [ ] **Release**: Tag v0.1.0 with a complete CHANGELOG.
+- [x] **Release**: Tag v0.1.0 with a complete CHANGELOG.
 
 ### Phase 2: Context & Insight Quality
 Focus on optimizing *how* we present data to the model to extract better reviews.
