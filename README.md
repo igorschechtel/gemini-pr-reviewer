@@ -8,19 +8,6 @@
 
 A fast, configurable GitHub Action that reviews pull requests with **Google Gemini**. It posts inline comments and a concise summary, helping you catch bugs, security issues, and performance bottlenecks before they merge.
 
-## 🌟 Features
-
-- **Comment Trigger**: Initiate reviews with `/gemini-review` on any PR.
-- **Two-Pass Review**:
-    - **Global Context**: Analyzes the PR description and diff summary first.
-    - **Inline Comments**: Provides specific, line-by-line feedback based on the global context.
-- **Smart Filtering**: focus reviews using `INCLUDE` and `EXCLUDE` glob patterns.
-- **Configurable Modes**: Choose from `strict`, `standard`, `security`, `performance`, or `lenient`.
-- **Custom Instructions**: Add your own prompt instructions (e.g., "Focus on TypeScript best practices").
-- **Safety Limits**: Built-in caps for files, hunks, and lines to prevent API overuse.
-
----
-
 ## 🚀 Quick Start
 
 ### 1. Get a Gemini API Key
@@ -65,7 +52,16 @@ Open a Pull Request and comment:
 /gemini-review
 ```
 
----
+## 🌟 Features
+
+- **Comment Trigger**: Initiate reviews with `/gemini-review` on any PR.
+- **Two-Pass Review**:
+    - **Global Context**: Analyzes the PR description and diff summary first.
+    - **Inline Comments**: Provides specific, line-by-line feedback based on the global context.
+- **Smart Filtering**: focus reviews using `INCLUDE` and `EXCLUDE` glob patterns.
+- **Configurable Modes**: Choose from `strict`, `standard`, `security`, `performance`, or `lenient`.
+- **Custom Instructions**: Add your own prompt instructions (e.g., "Focus on TypeScript best practices").
+- **Safety Limits**: Built-in caps for files, hunks, and lines to prevent API overuse.
 
 ## ⚙️ Configuration
 
@@ -93,8 +89,6 @@ Open a Pull Request and comment:
 | `security` | **Security focus only**. Looks for OWASP Top 10, secrets, and vulnerabilities. |
 | `performance` | **Performance focus only**. Looks for N+1 queries, memory leaks, and inefficiencies. |
 
----
-
 ## 💻 Local Development
 
 If you want to contribute or run the reviewer locally:
@@ -121,8 +115,6 @@ If you want to contribute or run the reviewer locally:
     ```bash
     bun run scripts/local_e2e.ts
     ```
-
----
 
 ## 🛣️ Roadmap
 
