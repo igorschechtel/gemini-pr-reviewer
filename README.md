@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run Gemini PR Reviewer
-        uses: igorschechtel/gemini-pr-reviewer@v0.1.0
+        uses: igorschechtel/gemini-pr-reviewer@v0.2.0
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
