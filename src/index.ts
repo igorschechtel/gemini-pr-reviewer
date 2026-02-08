@@ -7,16 +7,19 @@ import {
   filterDiffFiles,
   parseUnifiedDiff,
 } from './diff.js';
-import { type AIGlobalReview, type AIReview, GeminiClient } from './gemini.js';
+import { type AIGlobalReview, type AIReview, GeminiClient, type PRGoal } from './gemini.js';
 import {
   addCommentReaction,
   createReview,
+  extractLinkedIssueRefs,
+  fetchIssue,
   fetchPullRequest,
+  fetchPullRequestCommits,
   fetchPullRequestDiff,
   postIssueComment,
   type ReviewComment,
 } from './github.js';
-import { buildGlobalPrompt, buildPrompt } from './prompt.js';
+import { buildGlobalPrompt, buildGoalPrompt, buildPrompt } from './prompt.js';
 
 const MAX_COMMENTS = 100;
 
@@ -47,7 +50,11 @@ export type Dependencies = {
   ) => {
     review: (prompt: string) => Promise<AIReview[]>;
     reviewGlobal: (prompt: string) => Promise<AIGlobalReview>;
+    generatePRGoal: (prompt: string) => Promise<PRGoal>;
   };
+  fetchPullRequestCommits: typeof fetchPullRequestCommits;
+  fetchIssue: typeof fetchIssue;
+  extractLinkedIssueRefs: typeof extractLinkedIssueRefs;
 };
 
 export type RunResult = {
@@ -85,10 +92,10 @@ export function summarizeComments(
   lines.push('');
 
   const breakdown = [
-    ['critical', '🚨'],
-    ['high', '⚠️'],
-    ['medium', '💡'],
-    ['low', 'ℹ️'],
+    ['critical', '🟥'],
+    ['high', '🟧'],
+    ['medium', '🟨'],
+    ['low', '🟦'],
   ] as const;
 
   for (const [key, emoji] of breakdown) {
@@ -206,6 +213,33 @@ export async function run(params: {
 
   const gemini = deps.createGeminiClient(config.geminiApiKey, config.geminiModel);
 
+  console.log('Fetching PR context...');
+  const commits = await deps.fetchPullRequestCommits(owner, repo, pullNumber, config.githubToken);
+  const issueRefs = deps.extractLinkedIssueRefs(pr.body, owner, repo);
+
+  const linkedIssues = (
+    await Promise.all(
+      issueRefs.map((ref) =>
+        deps.fetchIssue(ref.owner, ref.repo, ref.issueNumber, config.githubToken),
+      ),
+    )
+  ).filter((issue) => issue.title);
+
+  let prGoal: PRGoal | undefined;
+  try {
+    const goalPrompt = buildGoalPrompt({
+      prTitle: pr.title,
+      prDescription: pr.body,
+      commits,
+      linkedIssues,
+    });
+    console.log('Generating PR goal...');
+    prGoal = await gemini.generatePRGoal(goalPrompt);
+    console.log(`PR Goal: ${prGoal.goal}`);
+  } catch (error) {
+    console.warn(`Failed to generate PR goal: ${(error as Error).message}`);
+  }
+
   const allReviews: AIReview[] = [];
   const comments: ReviewComment[] = [];
   const commentKeys = new Set<string>();
@@ -220,6 +254,7 @@ export async function run(params: {
         reviewMode: config.reviewMode,
         reviewInstructions: config.reviewInstructions,
         globalDiff,
+        prGoal,
       });
 
       console.log(`Analyzing global PR context (${globalDiff.split('\n').length} lines)`);
@@ -247,6 +282,7 @@ export async function run(params: {
       numberedDiff: numbered.lines.join('\n'),
       globalSummary: globalReview?.summary,
       globalFindings: globalReview?.findings,
+      prGoal,
     });
 
     console.log(`Analyzing ${file.path} (${numbered.lines.length} diff lines)`);
@@ -300,6 +336,9 @@ async function main(): Promise<void> {
     loadEventPayload,
     fetchPullRequest,
     fetchPullRequestDiff,
+    fetchPullRequestCommits,
+    fetchIssue,
+    extractLinkedIssueRefs,
     createReview,
     postIssueComment,
     addCommentReaction,

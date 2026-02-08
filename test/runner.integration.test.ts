@@ -78,7 +78,7 @@ describe('integration pipeline', () => {
         throw new Error('postIssueComment should not be called');
       },
       addCommentReaction: async () => {},
-      createGeminiClient: () => ({
+      createGeminiClient: (_apiKey: string, _modelName: string) => ({
         review: async () => [
           {
             lineNumber: firstReviewable.position,
@@ -90,7 +90,14 @@ describe('integration pipeline', () => {
           summary: 'No cross-file issues detected.',
           findings: [],
         }),
+        generatePRGoal: async () => ({
+          goal: 'Test Goal',
+          context: 'Test Context',
+        }),
       }),
+      fetchPullRequestCommits: async () => [],
+      fetchIssue: async () => ({ title: 'Test Issue', body: 'Test Body' }),
+      extractLinkedIssueRefs: () => [{ owner: 'acme', repo: 'rocket', issueNumber: 123 }],
     };
 
     const result = await run({

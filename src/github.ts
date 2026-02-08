@@ -93,6 +93,105 @@ export async function fetchPullRequestDiff(
   );
 }
 
+export async function fetchPullRequestCommits(
+  owner: string,
+  repo: string,
+  pullNumber: number,
+  token: string,
+): Promise<string[]> {
+  let allCommits: string[] = [];
+  let page = 1;
+  const perPage = 100;
+
+  while (true) {
+    const commits = await requestJson<{ commit: { message: string } }[]>(
+      `/repos/${owner}/${repo}/pulls/${pullNumber}/commits?per_page=${perPage}&page=${page}`,
+      token,
+    );
+    allCommits = allCommits.concat(commits.map((c) => c.commit.message));
+    if (commits.length < perPage) break;
+    page++;
+  }
+
+  return allCommits;
+}
+
+export async function fetchIssue(
+  owner: string,
+  repo: string,
+  issueNumber: number,
+  token: string,
+): Promise<{ title: string; body: string }> {
+  try {
+    const issue = await requestJson<{ title: string; body: string }>(
+      `/repos/${owner}/${repo}/issues/${issueNumber}`,
+      token,
+    );
+    return { title: issue.title, body: issue.body || '' };
+  } catch (e) {
+    console.warn(`Failed to fetch issue #${issueNumber}: ${(e as Error).message}`);
+    return { title: '', body: '' };
+  }
+}
+
+export function extractLinkedIssueRefs(
+  body: string,
+  defaultOwner: string,
+  defaultRepo: string,
+): { owner: string; repo: string; issueNumber: number }[] {
+  const refs: { owner: string; repo: string; issueNumber: number }[] = [];
+  const seen = new Set<string>();
+
+  // Patterns:
+  // 1. Full URL: https://github.com/owner/repo/issues/123
+  // 2. Cross-repo shorthand: owner/repo#123
+  // 3. Same-repo shorthand: #123
+  const patterns = [
+    {
+      regex: /https:\/\/github\.com\/([^/\s]+)\/([^/\s]+)\/issues\/(\d+)/g,
+      extract: (m: RegExpExecArray) => {
+        const owner = m[1];
+        const repo = m[2];
+        const num = m[3];
+        return owner && repo && num ? { owner, repo, number: parseInt(num, 10) } : null;
+      },
+    },
+    {
+      regex: /([^/\s#]+)\/([^/\s#]+)#(\d+)/g,
+      extract: (m: RegExpExecArray) => {
+        const owner = m[1];
+        const repo = m[2];
+        const num = m[3];
+        return owner && repo && num ? { owner, repo, number: parseInt(num, 10) } : null;
+      },
+    },
+    {
+      regex: /(?:\s|^)#(\d+)/g,
+      extract: (m: RegExpExecArray) => {
+        const num = m[1];
+        return num ? { owner: defaultOwner, repo: defaultRepo, number: parseInt(num, 10) } : null;
+      },
+    },
+  ];
+
+  for (const { regex, extract } of patterns) {
+    const matches = body.matchAll(regex);
+    for (const match of matches) {
+      const result = extract(match);
+      if (result) {
+        const { owner, repo, number } = result;
+        const key = `${owner}/${repo}#${number}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          refs.push({ owner, repo, issueNumber: number });
+        }
+      }
+    }
+  }
+
+  return refs;
+}
+
 export async function createReview(
   pr: PRDetails,
   token: string,
