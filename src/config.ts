@@ -56,7 +56,7 @@ export function loadConfig(): Config {
     reviewModeRaw === 'lenient' ||
     reviewModeRaw === 'security' ||
     reviewModeRaw === 'performance'
-      ? (reviewModeRaw as ReviewMode)
+      ? reviewModeRaw
       : 'standard';
 
   return {

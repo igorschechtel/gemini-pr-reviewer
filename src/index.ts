@@ -58,7 +58,13 @@ export type Dependencies = {
   fetchPullRequestCommits: typeof fetchPullRequestCommits;
   fetchIssue: typeof fetchIssue;
   extractLinkedIssueRefs: typeof extractLinkedIssueRefs;
-  fetchFileContent: typeof fetchFileContent;
+  fetchFileContent: (
+    owner: string,
+    repo: string,
+    path: string,
+    token: string,
+    ref?: string,
+  ) => Promise<string>;
   fetchRepoFileStructure: typeof fetchRepoFileStructure;
 };
 
@@ -222,7 +228,7 @@ export async function run(params: {
   const [commits, repoStructure, readme] = await Promise.all([
     deps.fetchPullRequestCommits(owner, repo, pullNumber, config.githubToken),
     deps.fetchRepoFileStructure(owner, repo, config.githubToken, pr.baseBranch),
-    deps.fetchFileContent(owner, repo, 'README.md', config.githubToken),
+    deps.fetchFileContent(owner, repo, 'README.md', config.githubToken, pr.baseBranch),
   ]);
 
   const issueRefs = deps.extractLinkedIssueRefs(pr.body, owner, repo);
@@ -310,69 +316,75 @@ export async function run(params: {
 
   const MAX_CONCURRENT_REVIEWS = 5;
 
-  const fileTasks = filteredFiles.map((file) => async () => {
-    const numbered = buildNumberedPatch(file, {
-      includePatterns: [],
-      excludePatterns: [],
-      maxFiles: config.maxFiles,
-      maxHunksPerFile: config.maxHunksPerFile,
-      maxLinesPerHunk: config.maxLinesPerHunk,
-    });
+  const fileReviews = await pLimit(
+    filteredFiles.map((file) => async () => {
+      // Strict early exit check to avoid expensive LLM calls
+      if (comments.length >= MAX_COMMENTS) {
+        return [];
+      }
 
-    if (numbered.lines.length === 0) return;
-
-    const prompt = buildPrompt({
-      prTitle: pr.title,
-      prDescription: pr.body,
-      filePath: file.path,
-      reviewMode: config.reviewMode,
-      reviewInstructions: config.reviewInstructions,
-      numberedDiff: numbered.lines.join('\n'),
-      globalSummary: globalReview?.summary,
-      globalFindings: globalReview?.findings,
-      prGoal,
-      repoContext: {
-        readme: readme || '',
-        fileStructure: repoStructure || '',
-      },
-    });
-
-    if (comments.length >= MAX_COMMENTS) {
-      return;
-    }
-    console.log(`Analyzing ${file.path} (${numbered.lines.length} diff lines)`);
-
-    const reviews = await gemini.review(prompt);
-    allReviews.push(...reviews);
-
-    for (const review of reviews) {
-      const adjustedPosition = adjustToReviewablePosition(
-        review.lineNumber,
-        numbered.lineMeta,
-        numbered.hunkPositions,
-      );
-
-      if (!adjustedPosition) continue;
-
-      const key = `${file.path}:${adjustedPosition}:${review.reviewComment}`;
-      if (commentKeys.has(key)) continue;
-      commentKeys.add(key);
-
-      comments.push({
-        path: file.path,
-        position: adjustedPosition,
-        body: review.reviewComment,
+      const numbered = buildNumberedPatch(file, {
+        includePatterns: [],
+        excludePatterns: [],
+        maxFiles: config.maxFiles,
+        maxHunksPerFile: config.maxHunksPerFile,
+        maxLinesPerHunk: config.maxLinesPerHunk,
       });
-      // Note: breaking early from parallel tasks is harder, we'll let them run but truncate later if needed
-    }
-  });
 
-  await pLimit(fileTasks, MAX_CONCURRENT_REVIEWS);
+      if (numbered.lines.length === 0) return [];
 
-  // Truncate to MAX_COMMENTS if we exceeded it during parallel processing
-  if (comments.length > MAX_COMMENTS) {
-    comments.length = MAX_COMMENTS;
-  }
+      const prompt = buildPrompt({
+        prTitle: pr.title,
+        prDescription: pr.body,
+        filePath: file.path,
+        reviewMode: config.reviewMode,
+        reviewInstructions: config.reviewInstructions,
+        numberedDiff: numbered.lines.join('\n'),
+        globalSummary: globalReview?.summary,
+        globalFindings: globalReview?.findings,
+        prGoal,
+        repoContext: {
+          readme: readme || '',
+          fileStructure: repoStructure || '',
+        },
+      });
+
+      console.log(`Analyzing ${file.path} (${numbered.lines.length} diff lines)`);
+
+      const reviews = await gemini.review(prompt);
+      const fileComments: ReviewComment[] = [];
+
+      for (const review of reviews) {
+        // Re-check limit within the loop to handle multiple reviews per file
+        if (comments.length + fileComments.length >= MAX_COMMENTS) break;
+
+        const adjustedPosition = adjustToReviewablePosition(
+          review.lineNumber,
+          numbered.lineMeta,
+          numbered.hunkPositions,
+        );
+
+        if (!adjustedPosition) continue;
+
+        const key = `${file.path}:${adjustedPosition}:${review.reviewComment}`;
+        if (commentKeys.has(key)) continue;
+        commentKeys.add(key);
+
+        fileComments.push({
+          path: file.path,
+          position: adjustedPosition,
+          body: review.reviewComment,
+        });
+      }
+
+      // Add to shared array safely (JS is single threaded, so this is safe between awaits)
+      comments.push(...fileComments);
+      return reviews;
+    }),
+    MAX_CONCURRENT_REVIEWS,
+  );
+
+  allReviews.push(...fileReviews.flat());
 
   const summary = summarizeComments(comments, allReviews, filteredFiles.length, globalReview);
 

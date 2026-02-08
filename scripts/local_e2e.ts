@@ -174,7 +174,7 @@ async function main(): Promise<void> {
       }
       return { title: `Mock Issue #${issueNumber}`, body: 'Mock body' };
     },
-    fetchFileContent: async (_owner, _repo, path) => {
+    fetchFileContent: async (_owner, _repo, path, _token, _ref) => {
       try {
         return await readFile(path, 'utf-8');
       } catch (_e) {
@@ -185,7 +185,18 @@ async function main(): Promise<void> {
       }
     },
     fetchRepoFileStructure: async () => {
-      return 'package.json\nsrc/index.ts\nREADME.md';
+      return [
+        'package.json',
+        'src/index.ts',
+        'src/prompt.ts',
+        'src/github.ts',
+        'src/config.ts',
+        'src/util.ts',
+        'README.md',
+        'test/index.test.ts',
+        'tsconfig.json',
+        'biome.json',
+      ].join('\n');
     },
   };
 

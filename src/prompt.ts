@@ -73,11 +73,11 @@ export function buildPrompt(params: {
     ? [
         'Repository Context:',
         '---',
-        'README Snippet:',
+        'README Snippet (truncated):',
         params.repoContext.readme.slice(0, 1000), // Truncate to avoid context bloom
         '---',
-        'File Structure (partial):',
-        params.repoContext.fileStructure.slice(0, 500),
+        'File Structure (truncated):',
+        params.repoContext.fileStructure.slice(0, 1500),
         '---',
         '',
       ].join('\n')
@@ -139,7 +139,7 @@ export function buildGlobalPrompt(params: {
         'README Snippet (truncated):',
         params.repoContext.readme.slice(0, 2000),
         '---',
-        'File Structure (top 200 files):',
+        'File Structure (top 200 files, truncated):',
         params.repoContext.fileStructure.slice(0, 10000),
         '---',
         '',

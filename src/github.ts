@@ -247,10 +247,12 @@ export async function fetchFileContent(
   repo: string,
   path: string,
   token: string,
+  ref?: string,
 ): Promise<string> {
   try {
+    const query = ref ? `?ref=${ref}` : '';
     const data = await requestJson<{ content: string; encoding: string }>(
-      `/repos/${owner}/${repo}/contents/${path}`,
+      `/repos/${owner}/${repo}/contents/${path}${query}`,
       token,
     );
 

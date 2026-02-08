@@ -47,6 +47,12 @@ Improve the user experience and security controls.
 - [ ] **Trigger Flexibility**: Support `pull_request` events (open, synchronize) and label-based triggers.
 - [ ] **Access Control**: Implement allowlists for users authorized to trigger reviews.
 - [ ] **Interactive Commands**: Support re-review commands or finer-grained triggers (e.g., `/gemini-review security`).
+- [ ] **Review Satisfaction & Scope Control**:
+    - [ ] **Stateful context (via history)**: Maintain statelessness by fetching the PR's existing comment/review history before analysis. Feed "resolved" or "ignored" threads back to the AI to prevent repetitive nagging on the same code locations.
+    - [ ] **Acceptance Thresholds**: Introduce an AI-generated "Readiness Score" (0-100%). If a PR is >90% ready, suppress minor nits to avoid "never-ending" loops.
+    - [ ] **Explicit Scope Control**: Allow users to define "Non-Critical Areas" or "Out of Scope" files in configuration to limit AI pedantry.
+    - [ ] **Review Fatigue Prevention**: Limit the total number of reviews per PR/branch to encourage human closure on open threads.
+    - [ ] **Contextual Severity Tuning**: Adjust the AI's "strictness" based on the PR's priority or lifecycle stage (e.g., "Draft" vs "Hotfix").
 
 ### Phase 5: Distribution & Optimization
 Optimize the action for faster execution and broader distribution.
