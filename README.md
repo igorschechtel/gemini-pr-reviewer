@@ -2,8 +2,9 @@
 
 ![CI](https://github.com/igorschechtel/gemini-pr-reviewer/actions/workflows/ci.yml/badge.svg)
 ![Version](https://img.shields.io/github/v/tag/igorschechtel/gemini-pr-reviewer?label=version)
-![License](https://img.shields.io/github/license/igorschechtel/gemini-pr-reviewer)
 ![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=flat&logo=bun&logoColor=white)
+![Gemini](https://img.shields.io/badge/Powered%20by-Gemini-4285F4.svg?style=flat&logo=googlegemini&logoColor=white)
+![License](https://img.shields.io/github/license/igorschechtel/gemini-pr-reviewer)
 
 A fast, configurable GitHub Action that reviews pull requests with **Google Gemini**. It posts inline comments and a concise summary, helping you catch bugs, security issues, and performance bottlenecks before they merge.
 
@@ -129,7 +130,7 @@ Planned improvements and milestones are tracked in [ROADMAP.md](ROADMAP.md).
 
 ## 📄 License
 
-MIT License. See [LICENSE](LICENSE).
+MIT License. See [LICENSE.md](LICENSE.md).
 
 ---
 *Note for AI Agents: Please refer to [AGENTS.md](./AGENTS.md) for project-specific conventions and instructions.*

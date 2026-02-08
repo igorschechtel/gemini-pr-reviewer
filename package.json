@@ -2,8 +2,11 @@
   "name": "gemini-pr-reviewer",
   "version": "0.1.0",
   "license": "MIT",
-  "private": true,
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/igorschechtel/gemini-pr-reviewer.git"
+  },
   "scripts": {
     "start": "bun run src/index.ts",
     "test": "bun test",
