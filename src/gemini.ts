@@ -12,7 +12,7 @@ export type AIGlobalReview = {
   findings: string[];
 };
 
-function sanitizeText(text: string): string {
+export function sanitizeText(text: string): string {
   // Use new RegExp with string literal to avoid linting error for control characters
   // identifying control characters by their hex codes
   // Explicitly constructing RegExp from string parts to avoid linter flagging it
@@ -21,7 +21,7 @@ function sanitizeText(text: string): string {
     .trim();
 }
 
-function extractJson(text: string): string {
+export function extractJson(text: string): string {
   let cleaned = text.trim();
   if (cleaned.startsWith('```json')) {
     cleaned = cleaned.slice(7);
@@ -52,7 +52,7 @@ function normalizePriority(value: unknown): AIReview['priority'] {
   return 'medium';
 }
 
-function parseReviews(text: string): AIReview[] {
+export function parseReviews(text: string): AIReview[] {
   const jsonText = extractJson(text);
 
   try {
@@ -87,7 +87,7 @@ interface FindingObject {
   details?: string;
 }
 
-function parseGlobalReview(text: string): AIGlobalReview {
+export function parseGlobalReview(text: string): AIGlobalReview {
   const jsonText = extractJson(text);
 
   try {

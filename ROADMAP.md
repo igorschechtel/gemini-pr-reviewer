@@ -15,12 +15,12 @@ The core functionality is fully implemented and operational.
 
 ### Phase 1: Stabilization & Testing
 Focus on ensuring reliability and maximizing test coverage before the v0.1.0 release.
-- [ ] **CI/CD Pipeline**: Implement GitHub Actions workflow for comprehensive testing and linting.
-- [ ] **Expanded Test Suite**:
-    - Configuration parsing edge cases.
-    - Specialized filter behavior tests.
-    - Robust JSON parsing for Gemini responses.
-- [ ] **Documentation**: Finalize README configuration tables and defaults.
+- [x] **CI/CD Pipeline**: Implement GitHub Actions workflow for comprehensive testing and linting.
+- [x] **Expanded Test Suite**:
+    - [x] Configuration parsing edge cases.
+    - [ ] Specialized filter behavior tests.
+    - [x] Robust JSON parsing for Gemini responses.
+- [x] **Documentation**: Finalize README configuration tables and defaults.
 - [ ] **Release**: Tag v0.1.0 with a complete CHANGELOG.
 
 ### Phase 2: Reliability & Scale

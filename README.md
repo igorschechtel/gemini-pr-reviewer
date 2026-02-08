@@ -84,6 +84,7 @@ Open a Pull Request and comment:
 | `EXCLUDE` | ❌ | `""` | Glob patterns to exclude (e.g., `**/*.test.ts`). |
 | `INCLUDE` | ❌ | `""` | Glob patterns to include (overrides exclude). |
 | `GLOBAL_REVIEW` | ❌ | `true` | Enable the initial global context pass. |
+| `GLOBAL_MAX_LINES` | ❌ | `2000` | Max lines of diff summary to include in global context. |
 
 ### Review Modes
 

@@ -86,14 +86,14 @@ export function filterDiffFiles(files: DiffFile[], options: DiffParseOptions): D
   for (const file of files) {
     if (options.includePatterns.length > 0) {
       const matchesInclude = options.includePatterns.some((pattern) =>
-        minimatch(file.path, pattern),
+        minimatch(file.path, pattern, { matchBase: true, dot: true }),
       );
       if (!matchesInclude) continue;
     }
 
     if (options.excludePatterns.length > 0) {
       const matchesExclude = options.excludePatterns.some((pattern) =>
-        minimatch(file.path, pattern),
+        minimatch(file.path, pattern, { matchBase: true, dot: true }),
       );
       if (matchesExclude) continue;
     }
