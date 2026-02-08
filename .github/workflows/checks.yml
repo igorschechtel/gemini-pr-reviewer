@@ -1,4 +1,4 @@
-name: Run Lint & TypeCheck & Tests
+name: CI Checks
 
 on:
   push:
