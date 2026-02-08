@@ -10,10 +10,7 @@ Welcome to the **Gemini PR Reviewer** project. This document provides essential 
 bun run check
 ```
 
-This command runs:
-1. **Linting & Formatting**: `biome check --fix`
-2. **Type Checking**: `tsgo` 
-3. **Tests**: `bun test`
+This command handles *Linting & Formatting*, *Type Checking*, and *Tests*. **Don't** use other similar commands, this is the only one you need to run. If it fails, consider the task unfinished.
 
 ## 🛠 Tech Stack
 
