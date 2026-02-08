@@ -5,9 +5,7 @@ import {
   addCommentReaction,
   createReview,
   extractLinkedIssueRefs,
-  fetchIssue,
   fetchPullRequest,
-  fetchPullRequestCommits,
   fetchPullRequestDiff,
   type PRDetails,
   postIssueComment,
@@ -69,8 +67,8 @@ async function fetchLocalPullRequest(
     try {
       const raw = await readFile(prJsonPath, 'utf-8');
       return JSON.parse(raw) as PRDetails;
-    } catch (e) {
-      console.warn(`Failed to load PR JSON from ${prJsonPath}: ${(e as Error).message}`);
+    } catch (_e) {
+      console.warn(`Failed to load PR JSON from ${prJsonPath}: ${(_e as Error).message}`);
     }
   }
 
@@ -153,7 +151,7 @@ async function main(): Promise<void> {
         try {
           const raw = await readFile(path, 'utf-8');
           return JSON.parse(raw) as string[];
-        } catch (error) {
+        } catch (_error) {
           console.warn(`Failed to load commits from ${path}`);
         }
       }
@@ -169,7 +167,7 @@ async function main(): Promise<void> {
           const raw = await readFile(path, 'utf-8');
           const issues = JSON.parse(raw) as Record<string, { title: string; body: string }>;
           if (issues[issueNumber]) return issues[issueNumber];
-        } catch (error) {
+        } catch (_error) {
           console.warn(`Failed to load issue #${issueNumber} from ${path}`);
         }
       }

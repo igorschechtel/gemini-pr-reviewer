@@ -78,7 +78,7 @@ describe('integration pipeline', () => {
         throw new Error('postIssueComment should not be called');
       },
       addCommentReaction: async () => {},
-      createGeminiClient: () => ({
+      createGeminiClient: (_apiKey: string, _modelName: string) => ({
         review: async () => [
           {
             lineNumber: firstReviewable.position,

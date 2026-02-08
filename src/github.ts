@@ -134,9 +134,9 @@ export function extractLinkedIssueRefs(
   const seen = new Set<string>();
 
   for (const match of matches) {
-    const owner = match[1];
-    const repo = match[2];
-    const numberStr = match[3];
+    const owner = match[1] as string;
+    const repo = match[2] as string;
+    const numberStr = match[3] as string;
 
     if (owner && repo && numberStr) {
       const issueNumber = parseInt(numberStr, 10);
