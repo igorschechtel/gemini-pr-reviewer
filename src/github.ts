@@ -121,3 +121,20 @@ export async function postIssueComment(pr: PRDetails, token: string, body: strin
     body: JSON.stringify({ body }),
   });
 }
+
+export async function addCommentReaction(
+  owner: string,
+  repo: string,
+  commentId: number,
+  reaction: string,
+  token: string,
+): Promise<void> {
+  await requestJson(`/repos/${owner}/${repo}/issues/comments/${commentId}/reactions`, token, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/vnd.github+json',
+    },
+    body: JSON.stringify({ content: reaction }),
+  });
+}

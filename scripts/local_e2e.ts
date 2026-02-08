@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { type Config, loadConfig } from '../src/config.js';
 import { GeminiClient } from '../src/gemini.js';
 import {
+  addCommentReaction,
   createReview,
   fetchPullRequest,
   fetchPullRequestDiff,
@@ -119,6 +120,13 @@ async function main(): Promise<void> {
         return;
       }
       await postIssueComment(pr, token, body);
+    },
+    addCommentReaction: async (owner, repo, commentId, reaction, token) => {
+      if (dryRun) {
+        console.log(`DRY_RUN enabled: skipping addCommentReaction (${reaction} to ${commentId})`);
+        return;
+      }
+      await addCommentReaction(owner, repo, commentId, reaction, token);
     },
     createGeminiClient: (apiKey, modelName) => new GeminiClient(apiKey, modelName),
   };
