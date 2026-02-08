@@ -24,7 +24,7 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: gemini-2.5-flash
+          GEMINI_MODEL: gemini-flash-latest
           REVIEW_MODE: standard
           REVIEW_INSTRUCTIONS: "Focus on correctness and security. Keep feedback concise."
           EXCLUDE: "*.md, *.txt, *.lock, *.json"

@@ -15,7 +15,7 @@ inputs:
   GEMINI_MODEL:
     description: "Gemini model to use"
     required: false
-    default: "gemini-2.5-flash"
+    default: "gemini-flash-latest"
   REVIEW_MODE:
     description: "Review mode: standard | strict | lenient | security | performance"
     required: false

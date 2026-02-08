@@ -9,6 +9,7 @@ import {
 } from './diff.js';
 import { type AIGlobalReview, type AIReview, GeminiClient } from './gemini.js';
 import {
+  addCommentReaction,
   createReview,
   fetchPullRequest,
   fetchPullRequestDiff,
@@ -25,6 +26,7 @@ export type EventPayload = {
     pull_request?: unknown;
   };
   comment?: {
+    id?: number;
     body?: string;
   };
   repository?: {
@@ -38,6 +40,7 @@ export type Dependencies = {
   fetchPullRequestDiff: typeof fetchPullRequestDiff;
   createReview: typeof createReview;
   postIssueComment: typeof postIssueComment;
+  addCommentReaction: typeof addCommentReaction;
   createGeminiClient: (
     apiKey: string,
     modelName: string,
@@ -181,6 +184,13 @@ export async function run(params: {
 
   console.log(`Reviewing ${owner}/${repo}#${pullNumber}`);
 
+  const commentId = event.comment?.id;
+  if (commentId) {
+    deps
+      .addCommentReaction(owner, repo, commentId, 'eyes', config.githubToken)
+      .catch((err) => console.error(`Failed to add reaction: ${err.message}`));
+  }
+
   const pr = await deps.fetchPullRequest(owner, repo, pullNumber, config.githubToken);
   const diffText = await deps.fetchPullRequestDiff(owner, repo, pullNumber, config.githubToken);
 
@@ -292,6 +302,7 @@ async function main(): Promise<void> {
     fetchPullRequestDiff,
     createReview,
     postIssueComment,
+    addCommentReaction,
     createGeminiClient: (apiKey, modelName) => new GeminiClient(apiKey, modelName),
   };
 

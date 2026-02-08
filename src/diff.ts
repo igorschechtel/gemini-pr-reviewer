@@ -20,6 +20,7 @@ export type DiffFile = {
 
 export type LineMeta = {
   position: number;
+  diffPosition: number;
   reviewable: boolean;
   hunkIndex: number;
   content: string;
@@ -109,41 +110,57 @@ export function buildNumberedPatch(file: DiffFile, options: DiffParseOptions): N
   const lineMeta = new Map<number, LineMeta>();
   const hunkPositions = new Map<number, number[]>();
 
+  let diffPosition = 0;
   let position = 0;
 
   const hunks = file.hunks.slice(0, options.maxHunksPerFile);
 
   hunks.forEach((hunk, hunkIndex) => {
+    // Header line counts as a position in the diff
+    diffPosition += 1;
+
+    // We only display the header if we are within limits (handled logic below),
+    // but we need to track it for diffPosition correctness.
+    const headerPosition = position + 1;
     position += 1;
-    lines.push(`${position} | ${hunk.header}`);
-    lineMeta.set(position, {
-      position,
+    lines.push(`${headerPosition} | ${hunk.header}`);
+
+    lineMeta.set(headerPosition, {
+      position: headerPosition,
+      diffPosition,
       reviewable: false,
       hunkIndex,
       content: hunk.header,
     });
-    hunkPositions.set(hunkIndex, [position]);
+    hunkPositions.set(hunkIndex, [headerPosition]);
 
-    const limitedLines = hunk.lines.slice(0, options.maxLinesPerHunk);
-    for (const line of limitedLines) {
-      position += 1;
-      lines.push(`${position} | ${line.content}`);
+    const limitedLinesCount = options.maxLinesPerHunk;
 
-      const reviewable =
-        (line.type === 'add' || line.type === 'normal') &&
-        !line.content.startsWith('\\ No newline');
+    hunk.lines.forEach((line, index) => {
+      diffPosition += 1;
 
-      lineMeta.set(position, {
-        position,
-        reviewable,
-        hunkIndex,
-        content: line.content,
-      });
+      // Only include in the prompt if within limits
+      if (index < limitedLinesCount) {
+        position += 1;
+        lines.push(`${position} | ${line.content}`);
 
-      const positions = hunkPositions.get(hunkIndex) || [];
-      positions.push(position);
-      hunkPositions.set(hunkIndex, positions);
-    }
+        const reviewable =
+          (line.type === 'add' || line.type === 'normal') &&
+          !line.content.startsWith('\\ No newline');
+
+        lineMeta.set(position, {
+          position,
+          diffPosition,
+          reviewable,
+          hunkIndex,
+          content: line.content,
+        });
+
+        const positions = hunkPositions.get(hunkIndex) || [];
+        positions.push(position);
+        hunkPositions.set(hunkIndex, positions);
+      }
+    });
   });
 
   return { lines, lineMeta, hunkPositions };
@@ -187,13 +204,13 @@ export function adjustToReviewablePosition(
 ): number | null {
   const meta = lineMeta.get(lineNumber);
   if (!meta) return null;
-  if (meta.reviewable) return lineNumber;
+  if (meta.reviewable) return meta.diffPosition;
 
   const positions = hunkPositions.get(meta.hunkIndex) || [];
   for (const pos of positions) {
     if (pos > lineNumber) {
       const candidate = lineMeta.get(pos);
-      if (candidate?.reviewable) return pos;
+      if (candidate?.reviewable) return candidate.diffPosition;
     }
   }
 
