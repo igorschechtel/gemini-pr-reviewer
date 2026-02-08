@@ -221,7 +221,7 @@ export async function run(params: {
   console.log('Fetching PR context...');
   const [commits, repoStructure, readme] = await Promise.all([
     deps.fetchPullRequestCommits(owner, repo, pullNumber, config.githubToken),
-    deps.fetchRepoFileStructure(owner, repo, config.githubToken),
+    deps.fetchRepoFileStructure(owner, repo, config.githubToken, pr.baseBranch),
     deps.fetchFileContent(owner, repo, 'README.md', config.githubToken),
   ]);
 
@@ -337,6 +337,9 @@ export async function run(params: {
       },
     });
 
+    if (comments.length >= MAX_COMMENTS) {
+      return;
+    }
     console.log(`Analyzing ${file.path} (${numbered.lines.length} diff lines)`);
 
     const reviews = await gemini.review(prompt);

@@ -12,23 +12,27 @@ graph LR
         RepoData ~~~ Challenge1
     end
 
+    IsGlobal{Global Review enabled?}
+
     subgraph GlobalReview [Global Review]
         direction TB
-        GlobalStep[Send all/most files to get 'global review': PR summary, cross-file issues, etc]
-        Challenge2[<i>Challenge: what to do when the PR is too big? Which strategy to use to decide what's most important to send?</i>]
+        GlobalStep[Summarize changes and find cross-file issues. Uses 'smart context' fallback for large diffs.]
+        Challenge2[<i>Challenge: how to handle PRs that exceed the model's context window?</i>]
         
         GlobalStep ~~~ Challenge2
     end
 
     subgraph PerFileReview [Per-file Review]
         direction TB
-        FileStep[Send chunks of files per review, aiming to reduce no. of requests but getting specific review feedback per line of code]
-        Challenge3[<i>Challenges: 1 how to include the info from previous steps in a way to isn't too much but also not too little? 2 how to make sure the response is directly mappable to inline comments?</i>]
+        FileStep[Send file batches in parallel to get granular feedback. Mapped to inline comments.]
+        Challenge3[<i>Challenges: 1 how to avoid 'hallucinated' line numbers? 2 how to optimize for cost/speed?</i>]
         
         FileStep ~~~ Challenge3
     end
 
     %% Connections
     Trigger --> ContextGathering
-    ContextGathering --> GlobalReview
+    ContextGathering --> IsGlobal
+    IsGlobal -- Yes --> GlobalReview
+    IsGlobal -- No --> PerFileReview
     GlobalReview --> PerFileReview

@@ -140,7 +140,7 @@ export function buildGlobalPrompt(params: {
         params.repoContext.readme.slice(0, 2000),
         '---',
         'File Structure (top 200 files):',
-        params.repoContext.fileStructure,
+        params.repoContext.fileStructure.slice(0, 10000),
         '---',
         '',
       ].join('\n')

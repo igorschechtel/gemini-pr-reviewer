@@ -178,7 +178,9 @@ async function main(): Promise<void> {
       try {
         return await readFile(path, 'utf-8');
       } catch (_e) {
-        console.warn(`Local E2E: Could not read ${path} from disk, returning empty`);
+        console.warn(
+          `Local E2E: Could not read ${path} from disk: ${(_e as Error).message}, returning empty`,
+        );
         return '';
       }
     },

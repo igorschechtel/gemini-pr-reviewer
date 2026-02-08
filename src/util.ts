@@ -10,7 +10,7 @@ export async function pLimit<T>(tasks: (() => Promise<T>)[], limit: number): Pro
   };
 
   for (let i = 0; i < tasks.length; i++) {
-    const p = runTask(i).then(() => {
+    const p = runTask(i).finally(() => {
       // Remove self from active
       const idx = active.indexOf(p);
       if (idx !== -1) active.splice(idx, 1);
