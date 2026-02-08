@@ -16,7 +16,7 @@ jobs:
       contains(github.event.comment.body, '/gemini-review')
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
           ref: refs/pull/${{ github.event.issue.number }}/head
