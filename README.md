@@ -3,14 +3,30 @@
 ![CI](https://github.com/igorschechtel/gemini-pr-reviewer/actions/workflows/ci.yml/badge.svg)
 ![Version](https://img.shields.io/github/v/tag/igorschechtel/gemini-pr-reviewer?label=version)
 ![License](https://img.shields.io/github/license/igorschechtel/gemini-pr-reviewer)
+![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=flat&logo=bun&logoColor=white)
 
-A fast, configurable GitHub Action that reviews pull requests with Google Gemini. It posts inline comments and a concise summary.
+A fast, configurable GitHub Action that reviews pull requests with **Google Gemini**. It posts inline comments and a concise summary, helping you catch bugs, security issues, and performance bottlenecks before they merge.
 
-## Quick Start
+## 🌟 Features
 
-1. Create a repository secret named `GEMINI_API_KEY`.
-2. Add this workflow to `.github/workflows/gemini-review.yml`.
-3. Open a PR and comment `/gemini-review`.
+- **Comment Trigger**: Initiate reviews with `/gemini-review` on any PR.
+- **Two-Pass Review**:
+    - **Global Context**: Analyzes the PR description and diff summary first.
+    - **Inline Comments**: Provides specific, line-by-line feedback based on the global context.
+- **Smart Filtering**: focus reviews using `INCLUDE` and `EXCLUDE` glob patterns.
+- **Configurable Modes**: Choose from `strict`, `standard`, `security`, `performance`, or `lenient`.
+- **Custom Instructions**: Add your own prompt instructions (e.g., "Focus on TypeScript best practices").
+- **Safety Limits**: Built-in caps for files, hunks, and lines to prevent API overuse.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Get a Gemini API Key
+Obtain your API key from [Google AI Studio](https://aistudio.google.com/api-keys) and add it as a [repository secret](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) named `GEMINI_API_KEY`.
+
+### 2. Add the Workflow
+Create a file at `.github/workflows/gemini-review.yml`:
 
 ```yaml
 name: Gemini PR Review
@@ -39,56 +55,81 @@ jobs:
           GEMINI_MODEL: gemini-2.5-flash
           REVIEW_MODE: standard
           REVIEW_INSTRUCTIONS: "Focus on correctness and security. Keep feedback concise."
-          EXCLUDE: "*.md,*.txt"
+          EXCLUDE: "dist/**,*.md,*.json"
 ```
 
-## Features
+### 3. Usage
+Open a Pull Request and comment:
+```text
+/gemini-review
+```
 
-- Comment trigger (`/gemini-review`) on PRs.
-- Multiple review modes to control strictness and focus.
-- Optional custom instructions appended to the prompt.
-- File filtering with include and exclude patterns.
-- Safety limits for files, hunks, and lines.
-- Two-pass review: global PR context plus per-file inline comments.
-- Always posts a summary review, even if there are zero inline comments.
+---
 
-## Inputs
+## ⚙️ Configuration
 
-| Name | Required | Default | Description |
-| --- | --- | --- | --- |
-| `GITHUB_TOKEN` | Yes | - | GitHub token to read PR data and post reviews. |
-| `GEMINI_API_KEY` | Yes | - | Google Gemini API key. |
-| `GEMINI_MODEL` | No | `gemini-2.5-flash` | Gemini model name. |
-| `REVIEW_MODE` | No | `standard` | `standard`, `strict`, `lenient`, `security`, `performance`. |
-| `REVIEW_INSTRUCTIONS` | No | `""` | Extra instructions appended to the prompt. |
-| `COMMAND_TRIGGER` | No | `/gemini-review` | Comment trigger text. |
-| `EXCLUDE` | No | `""` | Comma-separated glob patterns to skip. |
-| `INCLUDE` | No | `""` | Comma-separated glob patterns to include. |
-| `MAX_FILES` | No | `50` | Max files to review. |
-| `MAX_HUNKS_PER_FILE` | No | `20` | Max hunks per file. |
-| `MAX_LINES_PER_HUNK` | No | `500` | Max lines per hunk. |
-| `GLOBAL_REVIEW` | No | `true` | Enable a global PR-level review pass. |
-| `GLOBAL_MAX_LINES` | No | `2000` | Max total diff lines sent in the global review pass. |
+### Inputs
 
-## Review Modes
+| Input | Required | Default | Description |
+| :--- | :---: | :--- | :--- |
+| `GITHUB_TOKEN` | ✅ | - | GitHub token to read PR data and post reviews. |
+| `GEMINI_API_KEY` | ✅ | - | Google Gemini API key. |
+| `GEMINI_MODEL` | ❌ | `gemini-2.5-flash` | Gemini model to use. |
+| `REVIEW_MODE` | ❌ | `standard` | Review strictness/focus (see below). |
+| `REVIEW_INSTRUCTIONS` | ❌ | `""` | Custom instructions appended to the system prompt. |
+| `COMMAND_TRIGGER` | ❌ | `/gemini-review` | Comment text that triggers the action. |
+| `EXCLUDE` | ❌ | `""` | Glob patterns to exclude (e.g., `**/*.test.ts`). |
+| `INCLUDE` | ❌ | `""` | Glob patterns to include (overrides exclude). |
+| `GLOBAL_REVIEW` | ❌ | `true` | Enable the initial global context pass. |
 
-- `standard`: Bugs, security, performance, and maintainability. Skips minor style.
-- `strict`: Thorough and pedantic, includes minor issues.
-- `lenient`: Only critical bugs and security issues.
-- `security`: Security issues only.
-- `performance`: Performance issues only.
+### Review Modes
 
-## Notes
+| Mode | Focus |
+| :--- | :--- |
+| `standard` | General bugs, security, performance, and maintainability. Skips minor style nits. |
+| `strict` | Pedantic review. Includes minor style issues, variable naming, and best practices. |
+| `lenient` | Only critical bugs and major security vulnerabilities. |
+| `security` | **Security focus only**. Looks for OWASP Top 10, secrets, and vulnerabilities. |
+| `performance` | **Performance focus only**. Looks for N+1 queries, memory leaks, and inefficiencies. |
 
-- The action currently supports only the `issue_comment` trigger.
-- No repository checkout is required. The action reads PR data via the GitHub API.
-- Use `COMMAND_TRIGGER` to customize the comment text.
-- Enabling `GLOBAL_REVIEW` adds one additional Gemini request per run.
+---
 
-## Roadmap
+## 💻 Local Development
 
-Planned improvements and milestones are tracked in `roadmap.md`.
+If you want to contribute or run the reviewer locally:
 
-## License
+1.  **Clone & Install**
+    ```bash
+    git clone https://github.com/igorschechtel/gemini-pr-reviewer.git
+    cd gemini-pr-reviewer
+    bun install
+    ```
 
-MIT License. See `LICENSE`.
+2.  **Run Tests**
+    ```bash
+    bun test
+    ```
+
+3.  **Full Check (Lint + Type + Test)**
+    ```bash
+    bun run check
+    ```
+
+4.  **Local E2E Simulation**
+    Create a `.env` file with `GEMINI_API_KEY` and `GITHUB_TOKEN`, then run:
+    ```bash
+    bun run scripts/local_e2e.ts
+    ```
+
+---
+
+## 🛣️ Roadmap
+
+Planned improvements and milestones are tracked in [ROADMAP.md](ROADMAP.md).
+
+## 📄 License
+
+MIT License. See [LICENSE](LICENSE).
+
+---
+*Note for AI Agents: Please refer to [AGENTS.md](./AGENTS.md) for project-specific conventions and instructions.*
