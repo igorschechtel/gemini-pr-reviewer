@@ -1,12 +1,26 @@
 # Gemini PR Reviewer
 
-![CI](https://github.com/igorschechtel/gemini-pr-reviewer/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/igorschechtel/gemini-pr-reviewer/actions/workflows/checks.yml/badge.svg)
 ![Version](https://img.shields.io/github/v/tag/igorschechtel/gemini-pr-reviewer?label=version)
 ![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=flat&logo=bun&logoColor=white)
 ![Gemini](https://img.shields.io/badge/Powered%20by-Gemini-4285F4.svg?style=flat&logo=googlegemini&logoColor=white)
 ![License](https://img.shields.io/github/license/igorschechtel/gemini-pr-reviewer)
 
 A fast, configurable GitHub Action that reviews pull requests with **Google Gemini**. It posts inline comments and a concise summary, helping you catch bugs, security issues, and performance bottlenecks before they merge.
+
+<br />
+
+<br />
+
+## 💡 Why Gemini PR Reviewer?
+
+**High-quality AI code reviews shouldn't cost a fortune.**
+
+Services like CodeRabbit or Copilot used to be the only game in town, often charging $20+/user/ month. Gemini PR Reviewer offers a powerful, open-source alternative that runs directly in your GitHub Actions workflow.
+
+- **Cost-Effective**: Powered by Google's Gemini Flash, which offers a massive context window at a fraction of the cost of GPT-4.
+- **Privacy-First**: Your code stays within your GitHub Action runner and is sent directly to Google's API—no middleman servers or third-party data retention.
+- **Control**: You configure the prompt, the strictness, and the files to review. No opaque "AI magic" that you can't tune.
 
 <br />
 
