@@ -49,6 +49,7 @@ jobs:
 - Optional custom instructions appended to the prompt.
 - File filtering with include and exclude patterns.
 - Safety limits for files, hunks, and lines.
+- Two-pass review: global PR context plus per-file inline comments.
 - Always posts a summary review, even if there are zero inline comments.
 
 ## Inputs
@@ -66,6 +67,8 @@ jobs:
 | `MAX_FILES` | No | `50` | Max files to review. |
 | `MAX_HUNKS_PER_FILE` | No | `20` | Max hunks per file. |
 | `MAX_LINES_PER_HUNK` | No | `500` | Max lines per hunk. |
+| `GLOBAL_REVIEW` | No | `true` | Enable a global PR-level review pass. |
+| `GLOBAL_MAX_LINES` | No | `2000` | Max total diff lines sent in the global review pass. |
 
 ## Review Modes
 
@@ -80,6 +83,7 @@ jobs:
 - The action currently supports only the `issue_comment` trigger.
 - No repository checkout is required. The action reads PR data via the GitHub API.
 - Use `COMMAND_TRIGGER` to customize the comment text.
+- Enabling `GLOBAL_REVIEW` adds one additional Gemini request per run.
 
 ## Roadmap
 

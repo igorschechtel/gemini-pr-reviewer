@@ -7,6 +7,11 @@ export type AIReview = {
   category?: string;
 };
 
+export type AIGlobalReview = {
+  summary: string;
+  findings: string[];
+};
+
 function sanitizeText(text: string): string {
   return text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim();
 }
@@ -72,6 +77,40 @@ function parseReviews(text: string): AIReview[] {
   }
 }
 
+function parseGlobalReview(text: string): AIGlobalReview {
+  const jsonText = extractJson(text);
+
+  try {
+    const parsed = JSON.parse(jsonText);
+    const summary =
+      typeof parsed?.summary === "string" ? sanitizeText(parsed.summary) : "";
+
+    const findingsRaw =
+      Array.isArray(parsed?.findings)
+        ? parsed.findings
+        : Array.isArray(parsed?.crossFileFindings)
+          ? parsed.crossFileFindings
+          : [];
+
+    const findings = findingsRaw
+      .map((item: unknown) => {
+        if (typeof item === "string") return sanitizeText(item);
+        if (item && typeof item === "object") {
+          const title = typeof (item as any).title === "string" ? sanitizeText((item as any).title) : "";
+          const details = typeof (item as any).details === "string" ? sanitizeText((item as any).details) : "";
+          if (title && details) return `${title}: ${details}`;
+          return title || details;
+        }
+        return "";
+      })
+      .filter((item) => item.length > 0);
+
+    return { summary, findings };
+  } catch {
+    return { summary: "", findings: [] };
+  }
+}
+
 export class GeminiClient {
   private model: any;
 
@@ -85,5 +124,12 @@ export class GeminiClient {
     const response = result?.response;
     const text = response?.text ? response.text() : "";
     return parseReviews(text || "");
+  }
+
+  async reviewGlobal(prompt: string): Promise<AIGlobalReview> {
+    const result = await this.model.generateContent(prompt);
+    const response = result?.response;
+    const text = response?.text ? response.text() : "";
+    return parseGlobalReview(text || "");
   }
 }

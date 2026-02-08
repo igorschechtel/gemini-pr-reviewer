@@ -142,6 +142,37 @@ export function buildNumberedPatch(file: DiffFile, options: DiffParseOptions): N
   return { lines, lineMeta, hunkPositions };
 }
 
+export function buildGlobalDiff(
+  files: DiffFile[],
+  options: DiffParseOptions,
+  maxLines: number
+): string {
+  if (maxLines <= 0) return "";
+
+  const lines: string[] = [];
+  const pushLine = (line: string): boolean => {
+    if (lines.length >= maxLines) return false;
+    lines.push(line);
+    return true;
+  };
+
+  for (const file of files) {
+    if (!pushLine(`File: ${file.path}`)) break;
+
+    const hunks = file.hunks.slice(0, options.maxHunksPerFile);
+    for (const hunk of hunks) {
+      if (!pushLine(hunk.header)) return lines.join("\n");
+
+      const limitedLines = hunk.lines.slice(0, options.maxLinesPerHunk);
+      for (const line of limitedLines) {
+        if (!pushLine(line.content)) return lines.join("\n");
+      }
+    }
+  }
+
+  return lines.join("\n");
+}
+
 export function adjustToReviewablePosition(
   lineNumber: number,
   lineMeta: Map<number, LineMeta>,

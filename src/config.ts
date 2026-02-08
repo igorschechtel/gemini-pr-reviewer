@@ -12,6 +12,8 @@ export type Config = {
   maxFiles: number;
   maxHunksPerFile: number;
   maxLinesPerHunk: number;
+  globalReview: boolean;
+  globalMaxLines: number;
 };
 
 function parseList(value: string | undefined): string[] {
@@ -25,6 +27,11 @@ function parseList(value: string | undefined): string[] {
 function parseNumber(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parseBoolean(value: string | undefined, fallback: boolean): boolean {
+  if (value === undefined) return fallback;
+  return value.toLowerCase() === "true";
 }
 
 export function loadConfig(): Config {
@@ -58,6 +65,8 @@ export function loadConfig(): Config {
     includePatterns: parseList(process.env.INCLUDE),
     maxFiles: parseNumber(process.env.MAX_FILES, 50),
     maxHunksPerFile: parseNumber(process.env.MAX_HUNKS_PER_FILE, 20),
-    maxLinesPerHunk: parseNumber(process.env.MAX_LINES_PER_HUNK, 500)
+    maxLinesPerHunk: parseNumber(process.env.MAX_LINES_PER_HUNK, 500),
+    globalReview: parseBoolean(process.env.GLOBAL_REVIEW, true),
+    globalMaxLines: parseNumber(process.env.GLOBAL_MAX_LINES, 2000)
   };
 }

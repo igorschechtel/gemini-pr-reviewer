@@ -48,6 +48,14 @@ inputs:
     description: "Max lines per hunk"
     required: false
     default: "500"
+  GLOBAL_REVIEW:
+    description: "Enable a global PR-level review pass"
+    required: false
+    default: "true"
+  GLOBAL_MAX_LINES:
+    description: "Max total diff lines for the global review pass"
+    required: false
+    default: "2000"
 
 runs:
   using: "composite"
@@ -76,4 +84,6 @@ runs:
         MAX_FILES: ${{ inputs.MAX_FILES }}
         MAX_HUNKS_PER_FILE: ${{ inputs.MAX_HUNKS_PER_FILE }}
         MAX_LINES_PER_HUNK: ${{ inputs.MAX_LINES_PER_HUNK }}
+        GLOBAL_REVIEW: ${{ inputs.GLOBAL_REVIEW }}
+        GLOBAL_MAX_LINES: ${{ inputs.GLOBAL_MAX_LINES }}
       run: bun run src/index.ts

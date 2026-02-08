@@ -41,10 +41,28 @@ export function buildPrompt(params: {
   reviewMode: ReviewMode;
   reviewInstructions: string;
   numberedDiff: string;
+  globalSummary?: string;
+  globalFindings?: string[];
 }): string {
   const instructionsBlock = params.reviewInstructions
     ? `Review instructions from repository config:\n${params.reviewInstructions}\n`
     : "";
+
+  const hasGlobalSummary = Boolean(params.globalSummary && params.globalSummary.trim().length > 0);
+  const globalFindings = (params.globalFindings || []).map((item) => item.trim()).filter(Boolean);
+  const hasGlobalFindings = globalFindings.length > 0;
+
+  const globalContextBlock =
+    hasGlobalSummary || hasGlobalFindings
+      ? [
+          "Global PR context (cross-file):",
+          hasGlobalSummary ? `Summary: ${params.globalSummary}` : "",
+          hasGlobalFindings ? `Findings:\n- ${globalFindings.join("\n- ")}` : "",
+          ""
+        ]
+          .filter((line) => line !== "")
+          .join("\n")
+      : "";
 
   return [
     "You are a senior code reviewer.",
@@ -60,6 +78,7 @@ export function buildPrompt(params: {
     `Review mode: ${params.reviewMode}. ${modeInstructions(params.reviewMode)}`,
     "",
     instructionsBlock,
+    globalContextBlock,
     `File: ${params.filePath}`,
     "",
     `Pull request title: ${params.prTitle}`,
@@ -71,6 +90,41 @@ export function buildPrompt(params: {
     "Diff (line numbers included):",
     "```diff",
     params.numberedDiff,
+    "```"
+  ].join("\n");
+}
+
+export function buildGlobalPrompt(params: {
+  prTitle: string;
+  prDescription: string;
+  reviewMode: ReviewMode;
+  reviewInstructions: string;
+  globalDiff: string;
+}): string {
+  const instructionsBlock = params.reviewInstructions
+    ? `Review instructions from repository config:\n${params.reviewInstructions}\n`
+    : "";
+
+  return [
+    "You are a senior code reviewer.",
+    "Provide the response in JSON format:",
+    '{"summary": "<short summary>", "findings": ["<cross-file issue 1>", "<cross-file issue 2>"]}',
+    "If there are no cross-file issues, return: {\"summary\": \"No cross-file issues detected.\", \"findings\": []}",
+    "Focus on system-level issues, API changes, contracts, and consistency across files.",
+    "Do not provide inline comments or line numbers.",
+    "",
+    `Review mode: ${params.reviewMode}. ${modeInstructions(params.reviewMode)}`,
+    "",
+    instructionsBlock,
+    `Pull request title: ${params.prTitle}`,
+    "Pull request description:",
+    "---",
+    params.prDescription || "No description provided.",
+    "---",
+    "",
+    "Combined diff (multiple files):",
+    "```diff",
+    params.globalDiff,
     "```"
   ].join("\n");
 }

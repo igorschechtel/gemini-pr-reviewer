@@ -19,14 +19,16 @@ function applySafetyLimits(config: Config): Config {
   const maxFiles = clamp(config.maxFiles, 1);
   const maxHunksPerFile = clamp(config.maxHunksPerFile, 1);
   const maxLinesPerHunk = clamp(config.maxLinesPerHunk, 50);
+  const globalMaxLines = clamp(config.globalMaxLines, 200);
 
   if (
     maxFiles !== config.maxFiles ||
     maxHunksPerFile !== config.maxHunksPerFile ||
-    maxLinesPerHunk !== config.maxLinesPerHunk
+    maxLinesPerHunk !== config.maxLinesPerHunk ||
+    globalMaxLines !== config.globalMaxLines
   ) {
     console.log(
-      `Applying safe limits: MAX_FILES=${maxFiles}, MAX_HUNKS_PER_FILE=${maxHunksPerFile}, MAX_LINES_PER_HUNK=${maxLinesPerHunk}`
+      `Applying safe limits: MAX_FILES=${maxFiles}, MAX_HUNKS_PER_FILE=${maxHunksPerFile}, MAX_LINES_PER_HUNK=${maxLinesPerHunk}, GLOBAL_MAX_LINES=${globalMaxLines}`
     );
   }
 
@@ -34,7 +36,8 @@ function applySafetyLimits(config: Config): Config {
     ...config,
     maxFiles,
     maxHunksPerFile,
-    maxLinesPerHunk
+    maxLinesPerHunk,
+    globalMaxLines
   };
 }
 

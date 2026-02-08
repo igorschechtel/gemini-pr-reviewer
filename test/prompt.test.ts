@@ -16,4 +16,21 @@ describe("prompt builder", () => {
     expect(prompt).toContain("Focus on correctness and security.");
     expect(prompt).toContain("Diff (line numbers included):");
   });
+
+  test("includes global context when provided", () => {
+    const prompt = buildPrompt({
+      prTitle: "Add feature",
+      prDescription: "Test description",
+      filePath: "src/foo.ts",
+      reviewMode: "standard",
+      reviewInstructions: "",
+      numberedDiff: "1 | @@ -1,1 +1,1 @@\n2 | +const a = 1;",
+      globalSummary: "Cross-file summary.",
+      globalFindings: ["Ensure API changes are reflected in docs."]
+    });
+
+    expect(prompt).toContain("Global PR context");
+    expect(prompt).toContain("Cross-file summary.");
+    expect(prompt).toContain("Ensure API changes are reflected in docs.");
+  });
 });

@@ -26,7 +26,9 @@ describe("integration pipeline", () => {
       includePatterns: [],
       maxFiles: 50,
       maxHunksPerFile: 20,
-      maxLinesPerHunk: 500
+      maxLinesPerHunk: 500,
+      globalReview: true,
+      globalMaxLines: 2000
     };
 
     const event: EventPayload = {
@@ -74,7 +76,11 @@ describe("integration pipeline", () => {
             reviewComment: "Consider using a named constant.",
             priority: "low"
           }
-        ]
+        ],
+        reviewGlobal: async () => ({
+          summary: "No cross-file issues detected.",
+          findings: []
+        })
       })
     };
 
