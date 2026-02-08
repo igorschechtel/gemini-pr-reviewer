@@ -10,12 +10,6 @@ A fast, configurable GitHub Action that reviews pull requests with **Google Gemi
 
 <br />
 
-### 💡 Why this instead of paid tools?
-
-Services like CodeRabbit or Copilot are great but often expensive ($20+/user/month) and process your code on third-party servers. **Gemini PR Reviewer** runs directly in your GitHub Action, giving you a privacy-first, highly configurable, and significantly cheaper alternative powered by Google's massive-context Gemini Flash model.
-
-<br />
-
 ## 🚀 Quick Start
 
 ### 1. Get a Gemini API Key
@@ -59,6 +53,12 @@ Open a Pull Request and comment:
 ```text
 /gemini-review
 ```
+
+<br />
+
+### 💡 Why this instead of paid tools?
+
+Services like CodeRabbit or Copilot are great but often expensive ($20+/user/month), process your code on third-party servers, and limit free usage on private repos. **Gemini PR Reviewer** runs directly in your GitHub Action, giving you a privacy-first, highly configurable, and significantly cheaper alternative that works on **both public and private repositories** without subscription limits.
 
 <br />
 
