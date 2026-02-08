@@ -174,6 +174,30 @@ async function main(): Promise<void> {
       }
       return { title: `Mock Issue #${issueNumber}`, body: 'Mock body' };
     },
+    fetchFileContent: async (_owner, _repo, path, _token, _ref) => {
+      try {
+        return await readFile(path, 'utf-8');
+      } catch (_e) {
+        console.warn(
+          `Local E2E: Could not read ${path} from disk: ${(_e as Error).message}, returning empty`,
+        );
+        return '';
+      }
+    },
+    fetchRepoFileStructure: async () => {
+      return [
+        'package.json',
+        'src/index.ts',
+        'src/prompt.ts',
+        'src/github.ts',
+        'src/config.ts',
+        'src/util.ts',
+        'README.md',
+        'test/index.test.ts',
+        'tsconfig.json',
+        'biome.json',
+      ].join('\n');
+    },
   };
 
   const env = {

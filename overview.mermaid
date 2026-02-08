@@ -1,0 +1,38 @@
+graph LR
+    %% Node Definitions
+    Trigger([PR Review triggered])
+    
+    subgraph ContextGathering [Context Gathering]
+        direction TB
+        PRData[Use PR data: name, description, commits, issues to resolve PR Goal]
+        RepoData[Use repo data: name, README, other files to understand project context]
+        Challenge1[<i>Challenge: which data to send to get a good overview of the project and PR</i>]
+        
+        PRData ~~~ RepoData
+        RepoData ~~~ Challenge1
+    end
+
+    IsGlobal{Global Review enabled?}
+
+    subgraph GlobalReview [Global Review]
+        direction TB
+        GlobalStep[Summarize changes and find cross-file issues. Uses 'smart context' fallback for large diffs.]
+        Challenge2[<i>Challenge: how to handle PRs that exceed the model's context window?</i>]
+        
+        GlobalStep ~~~ Challenge2
+    end
+
+    subgraph PerFileReview [Per-file Review]
+        direction TB
+        FileStep[Send file batches in parallel to get granular feedback. Mapped to inline comments.]
+        Challenge3[<i>Challenges: 1 how to avoid 'hallucinated' line numbers? 2 how to optimize for cost/speed?</i>]
+        
+        FileStep ~~~ Challenge3
+    end
+
+    %% Connections
+    Trigger --> ContextGathering
+    ContextGathering --> IsGlobal
+    IsGlobal -- Yes --> GlobalReview
+    IsGlobal -- No --> PerFileReview
+    GlobalReview --> PerFileReview

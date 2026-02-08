@@ -6,6 +6,7 @@ export type PRDetails = {
   body: string;
   headSha?: string;
   baseSha?: string;
+  baseBranch?: string;
 };
 
 export type ReviewComment = {
@@ -35,7 +36,9 @@ async function requestJson<T>(path: string, token: string, options: RequestInit 
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(`GitHub API error ${response.status}: ${body}`);
+    const error = new Error(`GitHub API error ${response.status}: ${body}`);
+    (error as Error & { status: number }).status = response.status;
+    throw error;
   }
 
   return (await response.json()) as T;
@@ -58,7 +61,7 @@ interface GitHubPR {
   title: string;
   body: string | null;
   head: { sha: string };
-  base: { sha: string };
+  base: { sha: string; ref: string };
 }
 
 export async function fetchPullRequest(
@@ -77,6 +80,7 @@ export async function fetchPullRequest(
     body: data.body || '',
     headSha: data.head?.sha,
     baseSha: data.base?.sha,
+    baseBranch: data.base?.ref,
   };
 }
 
@@ -236,4 +240,57 @@ export async function addCommentReaction(
     },
     body: JSON.stringify({ content: reaction }),
   });
+}
+
+export async function fetchFileContent(
+  owner: string,
+  repo: string,
+  path: string,
+  token: string,
+  ref?: string,
+): Promise<string> {
+  try {
+    const query = ref ? `?ref=${ref}` : '';
+    const data = await requestJson<{ content: string; encoding: string }>(
+      `/repos/${owner}/${repo}/contents/${path}${query}`,
+      token,
+    );
+
+    if (data.encoding === 'base64') {
+      return Buffer.from(data.content, 'base64').toString('utf-8');
+    }
+    return data.content;
+  } catch (e) {
+    if ((e as Error & { status?: number }).status === 404) return '';
+    throw e;
+  }
+}
+
+export async function fetchRepoFileStructure(
+  owner: string,
+  repo: string,
+  token: string,
+  branch = 'main',
+): Promise<string> {
+  try {
+    const data = await requestJson<{ tree: { path: string; type: string }[] }>(
+      `/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
+      token,
+    );
+
+    // Limit to top 200 files to save context, prioritizing root files and shallow directories
+    return data.tree
+      .filter((item) => item.type === 'blob')
+      .map((item) => item.path)
+      .sort((a, b) => {
+        const depthA = a.split('/').length;
+        const depthB = b.split('/').length;
+        return depthA - depthB;
+      })
+      .slice(0, 200)
+      .join('\n');
+  } catch (e) {
+    console.warn(`Failed to fetch repo structure: ${(e as Error).message}`);
+    return '';
+  }
 }

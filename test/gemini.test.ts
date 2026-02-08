@@ -52,7 +52,6 @@ describe('Gemini Response Parsing', () => {
         Let me know if you need more help!
       `;
 
-      // actually, let's just parse it to verify
       const extracted = extractJson(input);
       const parsed = JSON.parse(extracted);
       expect(parsed.reviews).toHaveLength(1);
