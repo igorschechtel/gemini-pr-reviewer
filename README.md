@@ -1,17 +1,16 @@
 # Gemini PR Reviewer
 
-A GitHub Action that reviews pull requests using Google Gemini and posts inline comments plus a summary.
+![CI](https://github.com/igorschechtel/gemini-pr-reviewer/actions/workflows/ci.yml/badge.svg)
+![Version](https://img.shields.io/github/v/tag/igorschechtel/gemini-pr-reviewer?label=version)
+![License](https://img.shields.io/github/license/igorschechtel/gemini-pr-reviewer)
 
-## Features
-- Comment trigger (`/gemini-review`) on PRs
-- Configurable review mode (`standard` default)
-- Optional review instructions prompt
-- File filtering with include/exclude patterns
+A fast, configurable GitHub Action that reviews pull requests with Google Gemini. It posts inline comments and a concise summary.
 
-## Setup
+## Quick Start
 
 1. Create a repository secret named `GEMINI_API_KEY`.
-2. Add a workflow like this:
+2. Add this workflow to `.github/workflows/gemini-review.yml`.
+3. Open a PR and comment `/gemini-review`.
 
 ```yaml
 name: Gemini PR Review
@@ -33,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run Gemini PR Reviewer
-        uses: igorschechtel/gemini-pr-reviewer@main
+        uses: igorschechtel/gemini-pr-reviewer@v0.1.0
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -43,23 +42,44 @@ jobs:
           EXCLUDE: "*.md,*.txt"
 ```
 
+## Features
+
+- Comment trigger (`/gemini-review`) on PRs.
+- Multiple review modes to control strictness and focus.
+- Optional custom instructions appended to the prompt.
+- File filtering with include and exclude patterns.
+- Safety limits for files, hunks, and lines.
+- Always posts a summary review, even if there are zero inline comments.
+
 ## Inputs
 
-- `GITHUB_TOKEN` (required): GitHub token to read PR data and post reviews.
-- `GEMINI_API_KEY` (required): Gemini API key.
-- `GEMINI_MODEL` (optional): Gemini model name. Default: `gemini-2.5-flash`.
-- `REVIEW_MODE` (optional): `standard`, `strict`, `lenient`, `security`, `performance`.
-- `REVIEW_INSTRUCTIONS` (optional): Extra instructions appended to the prompt.
-- `COMMAND_TRIGGER` (optional): Comment trigger text. Default: `/gemini-review`.
-- `EXCLUDE` (optional): Comma-separated glob patterns to skip.
-- `INCLUDE` (optional): Comma-separated glob patterns to include.
-- `MAX_FILES` (optional): Max files to review. Default: `50`.
-- `MAX_HUNKS_PER_FILE` (optional): Max hunks per file. Default: `20`.
-- `MAX_LINES_PER_HUNK` (optional): Max lines per hunk. Default: `500`.
+| Name | Required | Default | Description |
+| --- | --- | --- | --- |
+| `GITHUB_TOKEN` | Yes | - | GitHub token to read PR data and post reviews. |
+| `GEMINI_API_KEY` | Yes | - | Google Gemini API key. |
+| `GEMINI_MODEL` | No | `gemini-2.5-flash` | Gemini model name. |
+| `REVIEW_MODE` | No | `standard` | `standard`, `strict`, `lenient`, `security`, `performance`. |
+| `REVIEW_INSTRUCTIONS` | No | `""` | Extra instructions appended to the prompt. |
+| `COMMAND_TRIGGER` | No | `/gemini-review` | Comment trigger text. |
+| `EXCLUDE` | No | `""` | Comma-separated glob patterns to skip. |
+| `INCLUDE` | No | `""` | Comma-separated glob patterns to include. |
+| `MAX_FILES` | No | `50` | Max files to review. |
+| `MAX_HUNKS_PER_FILE` | No | `20` | Max hunks per file. |
+| `MAX_LINES_PER_HUNK` | No | `500` | Max lines per hunk. |
+
+## Review Modes
+
+- `standard`: Bugs, security, performance, and maintainability. Skips minor style.
+- `strict`: Thorough and pedantic, includes minor issues.
+- `lenient`: Only critical bugs and security issues.
+- `security`: Security issues only.
+- `performance`: Performance issues only.
 
 ## Notes
-- The action always posts a summary review, even when no inline comments are generated.
-- It currently only supports the `issue_comment` trigger.
+
+- The action currently supports only the `issue_comment` trigger.
+- No repository checkout is required. The action reads PR data via the GitHub API.
+- Use `COMMAND_TRIGGER` to customize the comment text.
 
 ## Local E2E (Safe, Low-Cost)
 
@@ -69,12 +89,6 @@ This harness runs the full pipeline locally with strict limits:
 - `MAX_LINES_PER_HUNK=50`
 
 It defaults to `DRY_RUN=true`, so it won’t post reviews back to GitHub unless you opt in.
-
-### Example
-
-1. Save a GitHub event payload to a file (from a real comment event or a minimal stub).
-2. Optionally save a PR diff to a file.
-3. Run:
 
 ```bash
 export GITHUB_TOKEN=ghs_your_token
@@ -86,7 +100,7 @@ export DRY_RUN=true
 bun run scripts/local_e2e.ts
 ```
 
-### Minimal event payload example
+Minimal event payload example:
 
 ```json
 {
@@ -95,3 +109,11 @@ bun run scripts/local_e2e.ts
   "repository": { "full_name": "owner/repo" }
 }
 ```
+
+## Roadmap
+
+Planned improvements and milestones are tracked in `roadmap.md`.
+
+## License
+
+MIT License. See `LICENSE`.
