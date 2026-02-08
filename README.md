@@ -81,35 +81,6 @@ jobs:
 - No repository checkout is required. The action reads PR data via the GitHub API.
 - Use `COMMAND_TRIGGER` to customize the comment text.
 
-## Local E2E (Safe, Low-Cost)
-
-This harness runs the full pipeline locally with strict limits:
-- `MAX_FILES=1`
-- `MAX_HUNKS_PER_FILE=1`
-- `MAX_LINES_PER_HUNK=50`
-
-It defaults to `DRY_RUN=true`, so it won’t post reviews back to GitHub unless you opt in.
-
-```bash
-export GITHUB_TOKEN=ghs_your_token
-export GEMINI_API_KEY=your_gemini_key
-export LOCAL_EVENT_PATH=/path/to/event.json
-export LOCAL_DIFF_PATH=/path/to/pr.diff  # optional
-export DRY_RUN=true
-
-bun run scripts/local_e2e.ts
-```
-
-Minimal event payload example:
-
-```json
-{
-  "issue": { "number": 123, "pull_request": {} },
-  "comment": { "body": "/gemini-review" },
-  "repository": { "full_name": "owner/repo" }
-}
-```
-
 ## Roadmap
 
 Planned improvements and milestones are tracked in `roadmap.md`.
