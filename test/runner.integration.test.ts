@@ -115,5 +115,9 @@ describe('integration pipeline', () => {
     const firstCall = createReviewCalls[0];
     if (!firstCall) throw new Error('No review created');
     expect(firstCall.comments.length).toBe(1);
+    const comment = firstCall.comments[0];
+    if (!comment) throw new Error('No comment found');
+    expect(comment.body).toStartWith('**🔷 Low** — ');
+    expect(comment.body).toContain('Consider using a named constant.');
   });
 });

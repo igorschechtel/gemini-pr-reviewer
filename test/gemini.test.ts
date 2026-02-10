@@ -111,11 +111,13 @@ describe('Gemini Response Parsing', () => {
         reviews: [
           { lineNumber: 1, reviewComment: 'test', priority: 'Urgent' },
           { lineNumber: 2, reviewComment: 'test', priority: 'LOW' },
+          { lineNumber: 3, reviewComment: 'test', priority: 'critical' },
         ],
       });
       const result = parseReviews(input);
       expect(result[0]?.priority).toBe('medium'); // Default fallback
       expect(result[1]?.priority).toBe('low');
+      expect(result[2]?.priority).toBe('high'); // critical maps to high
     });
   });
 

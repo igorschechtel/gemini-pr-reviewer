@@ -86,7 +86,7 @@ export function buildPrompt(params: {
   return [
     'You are a senior code reviewer.',
     'Provide the response in JSON format:',
-    '{"reviews": [{"lineNumber": <diff_line_number>, "reviewComment": "<comment>", "priority": "low|medium|high|critical", "category": "<optional>"}]}',
+    '{"reviews": [{"lineNumber": <diff_line_number>, "reviewComment": "<comment>", "priority": "low|medium|high", "category": "<optional>"}]}',
     'If there are no suggestions, return: {"reviews": []}',
     'Use GitHub Markdown in comments.',
     'IMPORTANT: Never suggest adding comments to the code.',

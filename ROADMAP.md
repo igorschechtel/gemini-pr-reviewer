@@ -25,7 +25,7 @@ Focus on ensuring reliability and maximizing test coverage before the v0.1.0 rel
 
 ### Phase 2: Comment Precision & Severity
 Improve the quality and specificity of individual inline comments.
-- [ ] **Inline Severity Badges**: Include priority (critical/high/medium/low) in each inline comment body so reviewers can triage without cross-referencing the summary. Gemini already returns `priority` per review — surface it in the comment text (e.g., `**🟧 High** — <comment>`).
+- [x] **Inline Severity Badges**: Include priority (critical/high/medium/low) in each inline comment body so reviewers can triage without cross-referencing the summary. Gemini already returns `priority` per review — surface it in the comment text (e.g., `**🔶 High** — <comment>`).
 - [ ] **Multi-Line Comment Ranges**: Replace single-position comments with precise start/end line ranges. Currently all comments pin to one diff position and GitHub renders ~4 lines of default context. Changes needed:
     - Update the prompt JSON schema to request `startLineNumber`/`endLineNumber` instead of a single `lineNumber`.
     - Map both endpoints through `adjustToReviewablePosition` to diff positions.
