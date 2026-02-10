@@ -24,6 +24,12 @@ export type LineMeta = {
   reviewable: boolean;
   hunkIndex: number;
   content: string;
+  fileLineNumber?: number;
+};
+
+export type ResolvedPosition = {
+  fileLineNumber: number;
+  diffPosition: number;
 };
 
 export type NumberedPatch = {
@@ -154,6 +160,7 @@ export function buildNumberedPatch(file: DiffFile, options: DiffParseOptions): N
           reviewable,
           hunkIndex,
           content: line.content,
+          fileLineNumber: line.newNumber,
         });
 
         const positions = hunkPositions.get(hunkIndex) || [];
@@ -197,20 +204,53 @@ export function buildGlobalDiff(
   return lines.join('\n');
 }
 
-export function adjustToReviewablePosition(
+export function resolveCommentPosition(
   lineNumber: number,
   lineMeta: Map<number, LineMeta>,
   hunkPositions: Map<number, number[]>,
-): number | null {
+): ResolvedPosition | null {
   const meta = lineMeta.get(lineNumber);
   if (!meta) return null;
-  if (meta.reviewable) return meta.diffPosition;
 
+  if (meta.reviewable && meta.fileLineNumber != null) {
+    return { fileLineNumber: meta.fileLineNumber, diffPosition: meta.diffPosition };
+  }
+
+  // Walk forward to the next reviewable line in the same hunk
   const positions = hunkPositions.get(meta.hunkIndex) || [];
   for (const pos of positions) {
     if (pos > lineNumber) {
       const candidate = lineMeta.get(pos);
-      if (candidate?.reviewable) return candidate.diffPosition;
+      if (candidate?.reviewable && candidate.fileLineNumber != null) {
+        return { fileLineNumber: candidate.fileLineNumber, diffPosition: candidate.diffPosition };
+      }
+    }
+  }
+
+  return null;
+}
+
+export function resolveEndPosition(
+  endLineNumber: number,
+  lineMeta: Map<number, LineMeta>,
+  hunkPositions: Map<number, number[]>,
+): ResolvedPosition | null {
+  const meta = lineMeta.get(endLineNumber);
+  if (!meta) return null;
+
+  if (meta.reviewable && meta.fileLineNumber != null) {
+    return { fileLineNumber: meta.fileLineNumber, diffPosition: meta.diffPosition };
+  }
+
+  // Walk backward to the previous reviewable line in the same hunk
+  const positions = hunkPositions.get(meta.hunkIndex) || [];
+  for (let i = positions.length - 1; i >= 0; i--) {
+    const pos = positions[i];
+    if (pos !== undefined && pos < endLineNumber) {
+      const candidate = lineMeta.get(pos);
+      if (candidate?.reviewable && candidate.fileLineNumber != null) {
+        return { fileLineNumber: candidate.fileLineNumber, diffPosition: candidate.diffPosition };
+      }
     }
   }
 

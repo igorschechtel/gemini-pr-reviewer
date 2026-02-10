@@ -106,6 +106,49 @@ describe('Gemini Response Parsing', () => {
       expect(result[0]?.reviewComment).toBe('Valid');
     });
 
+    test('parses endLineNumber when valid', () => {
+      const input = JSON.stringify({
+        reviews: [{ lineNumber: 5, endLineNumber: 10, reviewComment: 'Multi-line issue' }],
+      });
+      const result = parseReviews(input);
+      expect(result).toHaveLength(1);
+      expect(result[0]?.endLineNumber).toBe(10);
+    });
+
+    test('omits endLineNumber when equal to lineNumber', () => {
+      const input = JSON.stringify({
+        reviews: [{ lineNumber: 5, endLineNumber: 5, reviewComment: 'Same line' }],
+      });
+      const result = parseReviews(input);
+      expect(result).toHaveLength(1);
+      // endLineNumber == lineNumber is valid (>= check), but single-line
+      expect(result[0]?.endLineNumber).toBe(5);
+    });
+
+    test('discards endLineNumber when less than lineNumber', () => {
+      const input = JSON.stringify({
+        reviews: [{ lineNumber: 10, endLineNumber: 5, reviewComment: 'Invalid range' }],
+      });
+      const result = parseReviews(input);
+      expect(result).toHaveLength(1);
+      expect(result[0]?.endLineNumber).toBeUndefined();
+    });
+
+    test('discards endLineNumber when not a finite number', () => {
+      const input = JSON.stringify({
+        reviews: [
+          { lineNumber: 5, endLineNumber: 'abc', reviewComment: 'Invalid' },
+          { lineNumber: 6, endLineNumber: null, reviewComment: 'Null' },
+          { lineNumber: 7, reviewComment: 'Missing' },
+        ],
+      });
+      const result = parseReviews(input);
+      expect(result).toHaveLength(3);
+      expect(result[0]?.endLineNumber).toBeUndefined();
+      expect(result[1]?.endLineNumber).toBeUndefined();
+      expect(result[2]?.endLineNumber).toBeUndefined();
+    });
+
     test('normalizes priority', () => {
       const input = JSON.stringify({
         reviews: [

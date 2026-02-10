@@ -1,11 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { type Config, loadConfig } from './config.js';
 import {
-  adjustToReviewablePosition,
   buildGlobalDiff,
   buildNumberedPatch,
   filterDiffFiles,
   parseUnifiedDiff,
+  resolveCommentPosition,
+  resolveEndPosition,
 } from './diff.js';
 import { type AIGlobalReview, type AIReview, GeminiClient, type PRGoal } from './gemini.js';
 import {
@@ -363,24 +364,54 @@ export async function run(params: {
         // Re-check limit within the loop to handle multiple reviews per file
         if (comments.length + fileComments.length >= MAX_COMMENTS) break;
 
-        const adjustedPosition = adjustToReviewablePosition(
+        const startResolved = resolveCommentPosition(
           review.lineNumber,
           numbered.lineMeta,
           numbered.hunkPositions,
         );
 
-        if (!adjustedPosition) continue;
+        if (!startResolved) continue;
 
-        const key = `${file.path}:${adjustedPosition}:${review.reviewComment}`;
+        const key = `${file.path}:${startResolved.fileLineNumber}:${review.reviewComment}`;
         if (commentKeys.has(key)) continue;
         commentKeys.add(key);
 
         const badge = severityBadge(review.priority || 'medium');
-        fileComments.push({
+
+        const comment: ReviewComment = {
           path: file.path,
-          position: adjustedPosition,
           body: `${badge} — ${review.reviewComment}`,
-        });
+          line: startResolved.fileLineNumber,
+          side: 'RIGHT',
+        };
+
+        // Multi-line range: resolve end position if endLineNumber > lineNumber
+        if (review.endLineNumber != null && review.endLineNumber > review.lineNumber) {
+          const endResolved = resolveEndPosition(
+            review.endLineNumber,
+            numbered.lineMeta,
+            numbered.hunkPositions,
+          );
+
+          if (endResolved) {
+            const startMeta = numbered.lineMeta.get(review.lineNumber);
+            const endMeta = numbered.lineMeta.get(review.endLineNumber);
+
+            // Guard: both must be in the same hunk, and end must be after start
+            if (
+              startMeta &&
+              endMeta &&
+              startMeta.hunkIndex === endMeta.hunkIndex &&
+              endResolved.fileLineNumber > startResolved.fileLineNumber
+            ) {
+              comment.start_line = startResolved.fileLineNumber;
+              comment.start_side = 'RIGHT';
+              comment.line = endResolved.fileLineNumber;
+            }
+          }
+        }
+
+        fileComments.push(comment);
       }
 
       // Add to shared array safely (JS is single threaded, so this is safe between awaits)
