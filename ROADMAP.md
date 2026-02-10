@@ -23,7 +23,16 @@ Focus on ensuring reliability and maximizing test coverage before the v0.1.0 rel
 - [x] **Documentation**: Finalize README configuration tables and defaults.
 - [x] **Release**: Tag v0.1.0 with a complete CHANGELOG.
 
-### Phase 2: Context & Insight Quality
+### Phase 2: Comment Precision & Severity
+Improve the quality and specificity of individual inline comments.
+- [ ] **Inline Severity Badges**: Include priority (critical/high/medium/low) in each inline comment body so reviewers can triage without cross-referencing the summary. Gemini already returns `priority` per review — surface it in the comment text (e.g., `**🟧 High** — <comment>`).
+- [ ] **Multi-Line Comment Ranges**: Replace single-position comments with precise start/end line ranges. Currently all comments pin to one diff position and GitHub renders ~4 lines of default context. Changes needed:
+    - Update the prompt JSON schema to request `startLineNumber`/`endLineNumber` instead of a single `lineNumber`.
+    - Map both endpoints through `adjustToReviewablePosition` to diff positions.
+    - Switch `ReviewComment` to use GitHub's multi-line fields (`start_line`/`line`, `start_side`/`side`).
+    - Update `createReview` to post multi-line comments via the GitHub API.
+
+### Phase 3: Context & Insight Quality
 Focus on optimizing *how* we present data to the model to extract better reviews.
 - [ ] **Golden Data Suite**: Create `benchmarks/` with static diffs to measure consistency.
 - [ ] **Context Optimization**:
@@ -35,14 +44,14 @@ Focus on optimizing *how* we present data to the model to extract better reviews
 - [ ] **Prompt Engineering**: Iteratively refine prompts to guide the fixed model towards better insights.
 - [ ] **Automated Scoring**: Use a "Judge" to verify if context/prompt changes actually yield better comments for the same model.
 
-### Phase 3: Reliability & Scale
+### Phase 4: Reliability & Scale
 Address potential bottlenecks for larger repositories and higher loads.
 - [ ] **Large Diff Handling**: Implement intelligent chunking for diffs exceeding model context limits.
 - [ ] **Rate Limiting**: Add backoff/retry logic for GitHub and Gemini API rate limits.
 - [ ] **Configurable Thresholds**: Expose `MAX_COMMENTS` configuration (currently hard-capped).
 - [ ] **Observability**: Implement structured JSON logging for better debugging in Action logs.
 
-### Phase 4: UX & Security Enhancements
+### Phase 5: UX & Security Enhancements
 Improve the user experience and security controls.
 - [ ] **Trigger Flexibility**: Support `pull_request` events (open, synchronize) and label-based triggers.
 - [ ] **Access Control**: Implement allowlists for users authorized to trigger reviews.
@@ -54,7 +63,7 @@ Improve the user experience and security controls.
     - [ ] **Review Fatigue Prevention**: Limit the total number of reviews per PR/branch to encourage human closure on open threads.
     - [ ] **Contextual Severity Tuning**: Adjust the AI's "strictness" based on the PR's priority or lifecycle stage (e.g., "Draft" vs "Hotfix").
 
-### Phase 5: Distribution & Optimization
+### Phase 6: Distribution & Optimization
 Optimize the action for faster execution and broader distribution.
 - [ ] **Pre-bundling**: Bundle the action to remove the `bun install` step at runtime.
 - [ ] **Artifacts**: Publish pinned release artifacts for stable consumption.
