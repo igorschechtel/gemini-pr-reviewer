@@ -26,6 +26,19 @@ import { pLimit } from './util.js';
 
 const MAX_COMMENTS = 100;
 
+const SEVERITY_BADGES = {
+  high: { emoji: '🔴', label: 'High' },
+  medium: { emoji: '🔶', label: 'Medium' },
+  low: { emoji: '🔷', label: 'Low' },
+} as const;
+
+const DEFAULT_BADGE = SEVERITY_BADGES.medium;
+
+export function severityBadge(priority: string): string {
+  const badge = SEVERITY_BADGES[priority as keyof typeof SEVERITY_BADGES] ?? DEFAULT_BADGE;
+  return `**${badge.emoji} ${badge.label}**`;
+}
+
 export type EventPayload = {
   issue?: {
     number?: number;
@@ -84,7 +97,6 @@ export function summarizeComments(
   globalReview?: AIGlobalReview,
 ): string {
   const counts: Record<string, number> = {
-    critical: 0,
     high: 0,
     medium: 0,
     low: 0,
@@ -102,14 +114,7 @@ export function summarizeComments(
   lines.push(`Generated **${comments.length}** inline comment(s).`);
   lines.push('');
 
-  const breakdown = [
-    ['critical', '🟥'],
-    ['high', '🟧'],
-    ['medium', '🟨'],
-    ['low', '🟦'],
-  ] as const;
-
-  for (const [key, emoji] of breakdown) {
+  for (const [key, { emoji }] of Object.entries(SEVERITY_BADGES)) {
     lines.push(`- ${emoji} ${key}: ${counts[key]}`);
   }
 
@@ -370,10 +375,11 @@ export async function run(params: {
         if (commentKeys.has(key)) continue;
         commentKeys.add(key);
 
+        const badge = severityBadge(review.priority || 'medium');
         fileComments.push({
           path: file.path,
           position: adjustedPosition,
-          body: review.reviewComment,
+          body: `${badge} — ${review.reviewComment}`,
         });
       }
 

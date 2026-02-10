@@ -3,7 +3,7 @@ import { type GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai'
 export type AIReview = {
   lineNumber: number;
   reviewComment: string;
-  priority?: 'low' | 'medium' | 'high' | 'critical';
+  priority?: 'low' | 'medium' | 'high';
   category?: string;
 };
 
@@ -51,7 +51,8 @@ export function extractJson(text: string): string {
 
 function normalizePriority(value: unknown): AIReview['priority'] {
   const raw = String(value || '').toLowerCase();
-  if (raw === 'critical' || raw === 'high' || raw === 'medium' || raw === 'low') {
+  if (raw === 'critical') return 'high';
+  if (raw === 'high' || raw === 'medium' || raw === 'low') {
     return raw as AIReview['priority'];
   }
   return 'medium';
