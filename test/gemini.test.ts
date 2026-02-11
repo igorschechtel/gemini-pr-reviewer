@@ -121,8 +121,7 @@ describe('Gemini Response Parsing', () => {
       });
       const result = parseReviews(input);
       expect(result).toHaveLength(1);
-      // endLineNumber == lineNumber is valid (>= check), but single-line
-      expect(result[0]?.endLineNumber).toBe(5);
+      expect(result[0]?.endLineNumber).toBeUndefined();
     });
 
     test('discards endLineNumber when less than lineNumber', () => {

@@ -76,7 +76,7 @@ export function parseReviews(text: string): AIReview[] {
       if (!reviewComment.trim()) continue;
 
       const rawEnd = Number(review?.endLineNumber);
-      const endLineNumber = Number.isFinite(rawEnd) && rawEnd >= lineNumber ? rawEnd : undefined;
+      const endLineNumber = Number.isFinite(rawEnd) && rawEnd > lineNumber ? rawEnd : undefined;
 
       results.push({
         lineNumber,
