@@ -1,53 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  adjustToReviewablePosition,
   buildGlobalDiff,
   buildNumberedPatch,
   parseUnifiedDiff,
+  resolveCommentPosition,
+  resolveEndPosition,
 } from '../src/diff.ts';
 
 describe('diff parsing and numbering', () => {
-  test('builds numbered patch and adjusts to reviewable lines', () => {
-    const diff = `diff --git a/src/foo.ts b/src/foo.ts
-index 1111111..2222222 100644
---- a/src/foo.ts
-+++ b/src/foo.ts
-@@ -1,1 +1,2 @@
--const a = 1;
-+const a = 2;
-+const b = 3;
-`;
-
-    const files = parseUnifiedDiff(diff);
-    expect(files.length).toBe(1);
-    const file = files[0];
-    if (!file) throw new Error('File not found');
-
-    const numbered = buildNumberedPatch(file, {
-      includePatterns: [],
-      excludePatterns: [],
-      maxFiles: 50,
-      maxHunksPerFile: 20,
-      maxLinesPerHunk: 500,
-    });
-
-    expect(numbered.lines[0]).toContain('@@');
-
-    const metaValues = Array.from(numbered.lineMeta.values());
-    const deletedLine = metaValues.find((m) => m.content.startsWith('-const a'));
-    const addedLine = metaValues.find((m) => m.content.startsWith('+const a'));
-
-    if (!deletedLine || !addedLine) throw new Error('Lines not found');
-
-    const adjusted = adjustToReviewablePosition(
-      deletedLine.position,
-      numbered.lineMeta,
-      numbered.hunkPositions,
-    );
-
-    expect(adjusted).toBe(addedLine.diffPosition);
-  });
-
   test('correctly maps truncated hunk positions to real diff positions', () => {
     // A diff with ONE hunk that has 5 lines
     const diff = `diff --git a/src/long.ts b/src/long.ts
@@ -159,6 +119,158 @@ index 1111111..2222222 100644
     // Real Diff: Line 5 (Content 1 of Hunk 2)
     // Virtual: Line 4
     expect(multiNumbered.lineMeta.get(4)?.diffPosition).toBe(5);
+  });
+
+  test('propagates fileLineNumber from DiffLine.newNumber', () => {
+    const file = {
+      path: 'src/test.ts',
+      hunks: [
+        {
+          header: '@@ -1,2 +1,3 @@',
+          lines: [
+            { content: ' context', type: 'normal' as const, newNumber: 1, oldNumber: 1 },
+            { content: '+added', type: 'add' as const, newNumber: 2 },
+            { content: '-removed', type: 'del' as const, oldNumber: 2 },
+          ],
+        },
+      ],
+    };
+
+    const numbered = buildNumberedPatch(file, {
+      includePatterns: [],
+      excludePatterns: [],
+      maxFiles: 50,
+      maxHunksPerFile: 20,
+      maxLinesPerHunk: 500,
+    });
+
+    // Position 1 = header (no fileLineNumber)
+    expect(numbered.lineMeta.get(1)?.fileLineNumber).toBeUndefined();
+
+    // Position 2 = context line, newNumber=1
+    expect(numbered.lineMeta.get(2)?.fileLineNumber).toBe(1);
+
+    // Position 3 = added line, newNumber=2
+    expect(numbered.lineMeta.get(3)?.fileLineNumber).toBe(2);
+
+    // Position 4 = deleted line, no newNumber
+    expect(numbered.lineMeta.get(4)?.fileLineNumber).toBeUndefined();
+  });
+
+  test('resolveCommentPosition walks forward to reviewable line', () => {
+    const file = {
+      path: 'src/test.ts',
+      hunks: [
+        {
+          header: '@@ -1,3 +1,3 @@',
+          lines: [
+            { content: '-old', type: 'del' as const, oldNumber: 1 },
+            { content: '+new1', type: 'add' as const, newNumber: 1 },
+            { content: '+new2', type: 'add' as const, newNumber: 2 },
+          ],
+        },
+      ],
+    };
+
+    const numbered = buildNumberedPatch(file, {
+      includePatterns: [],
+      excludePatterns: [],
+      maxFiles: 50,
+      maxHunksPerFile: 20,
+      maxLinesPerHunk: 500,
+    });
+
+    // Position 2 is the deleted line (not reviewable)
+    const deletedMeta = numbered.lineMeta.get(2);
+    expect(deletedMeta?.reviewable).toBe(false);
+
+    // Should walk forward to the next reviewable line (position 3, newNumber=1)
+    const resolved = resolveCommentPosition(2, numbered.lineMeta, numbered.hunkPositions);
+    expect(resolved).not.toBeNull();
+    expect(resolved?.fileLineNumber).toBe(1);
+
+    // Directly reviewable line
+    const direct = resolveCommentPosition(3, numbered.lineMeta, numbered.hunkPositions);
+    expect(direct).not.toBeNull();
+    expect(direct?.fileLineNumber).toBe(1);
+  });
+
+  test('resolveCommentPosition returns null for unknown line', () => {
+    const file = {
+      path: 'src/test.ts',
+      hunks: [
+        {
+          header: '@@ -1,1 +1,1 @@',
+          lines: [{ content: '+line', type: 'add' as const, newNumber: 1 }],
+        },
+      ],
+    };
+
+    const numbered = buildNumberedPatch(file, {
+      includePatterns: [],
+      excludePatterns: [],
+      maxFiles: 50,
+      maxHunksPerFile: 20,
+      maxLinesPerHunk: 500,
+    });
+
+    expect(resolveCommentPosition(999, numbered.lineMeta, numbered.hunkPositions)).toBeNull();
+  });
+
+  test('resolveEndPosition walks backward to reviewable line', () => {
+    const file = {
+      path: 'src/test.ts',
+      hunks: [
+        {
+          header: '@@ -1,3 +1,3 @@',
+          lines: [
+            { content: '+new1', type: 'add' as const, newNumber: 1 },
+            { content: '+new2', type: 'add' as const, newNumber: 2 },
+            { content: '-old', type: 'del' as const, oldNumber: 3 },
+          ],
+        },
+      ],
+    };
+
+    const numbered = buildNumberedPatch(file, {
+      includePatterns: [],
+      excludePatterns: [],
+      maxFiles: 50,
+      maxHunksPerFile: 20,
+      maxLinesPerHunk: 500,
+    });
+
+    // Position 4 is the deleted line (not reviewable) — should walk backward to position 3
+    const resolved = resolveEndPosition(4, numbered.lineMeta, numbered.hunkPositions);
+    expect(resolved).not.toBeNull();
+    expect(resolved?.fileLineNumber).toBe(2);
+
+    // Directly reviewable line
+    const direct = resolveEndPosition(3, numbered.lineMeta, numbered.hunkPositions);
+    expect(direct).not.toBeNull();
+    expect(direct?.fileLineNumber).toBe(2);
+  });
+
+  test('resolveEndPosition returns null for unknown line', () => {
+    const file = {
+      path: 'src/test.ts',
+      hunks: [
+        {
+          header: '@@ -1,1 +1,1 @@',
+          lines: [{ content: '+line', type: 'add' as const, newNumber: 1 }],
+        },
+      ],
+    };
+
+    const numbered = buildNumberedPatch(file, {
+      includePatterns: [],
+      excludePatterns: [],
+      maxFiles: 50,
+      maxHunksPerFile: 20,
+      maxLinesPerHunk: 500,
+    });
+
+    expect(resolveEndPosition(999, numbered.lineMeta, numbered.hunkPositions)).toBeNull();
   });
 
   test('builds a global diff snippet with a max line cap', () => {

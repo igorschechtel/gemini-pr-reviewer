@@ -2,6 +2,7 @@ import { type GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai'
 
 export type AIReview = {
   lineNumber: number;
+  endLineNumber?: number;
   reviewComment: string;
   priority?: 'low' | 'medium' | 'high';
   category?: string;
@@ -74,8 +75,12 @@ export function parseReviews(text: string): AIReview[] {
       if (!Number.isFinite(lineNumber) || lineNumber <= 0) continue;
       if (!reviewComment.trim()) continue;
 
+      const rawEnd = Number(review?.endLineNumber);
+      const endLineNumber = Number.isFinite(rawEnd) && rawEnd > lineNumber ? rawEnd : undefined;
+
       results.push({
         lineNumber,
+        endLineNumber,
         reviewComment: sanitizeText(reviewComment),
         priority: normalizePriority(review?.priority),
         category: typeof review?.category === 'string' ? sanitizeText(review.category) : undefined,

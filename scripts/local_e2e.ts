@@ -217,7 +217,10 @@ function logReviewPreview(body: string, comments: ReviewComment[]): void {
   console.log(body);
   console.log('--- Inline Comments ---');
   for (const comment of comments) {
-    console.log(`- ${comment.path} @ ${comment.position}: ${comment.body}`);
+    const range = comment.start_line
+      ? `lines ${comment.start_line}-${comment.line}`
+      : `line ${comment.line}`;
+    console.log(`- ${comment.path} @ ${range}: ${comment.body}`);
   }
 }
 
