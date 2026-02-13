@@ -56,7 +56,7 @@ index 0000000..abcdef3
       filePath: 'src/report.ts',
       line: 26,
       keywords: ['n+1', 'loop', 'query', 'batch', 'performance', 'join'],
-      priority: 'medium',
+      priority: 'high',
       description: 'Database query inside for loop causes N+1 query problem',
     },
   ],
