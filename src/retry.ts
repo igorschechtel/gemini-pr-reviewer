@@ -46,14 +46,11 @@ export async function withRetry<T>(
   options?: RetryOptions,
 ): Promise<T> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  let lastError: unknown;
 
-  for (let attempt = 1; attempt <= opts.maxAttempts; attempt++) {
+  for (let attempt = 1; ; attempt++) {
     try {
       return await fn();
     } catch (error) {
-      lastError = error;
-
       if (!isRetryableError(error) || attempt === opts.maxAttempts) {
         throw error;
       }
@@ -75,6 +72,4 @@ export async function withRetry<T>(
       await sleep(delay);
     }
   }
-
-  throw lastError;
 }
