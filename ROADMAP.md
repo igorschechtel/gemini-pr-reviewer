@@ -18,7 +18,7 @@ Focus on ensuring reliability and maximizing test coverage before the v0.1.0 rel
 - [x] **CI/CD Pipeline**: Implement GitHub Actions workflow for comprehensive testing and linting.
 - [x] **Expanded Test Suite**:
     - [x] Configuration parsing edge cases.
-    - [ ] Specialized filter behavior tests.
+    - [x] Specialized filter behavior tests.
     - [x] Robust JSON parsing for Gemini responses.
 - [x] **Documentation**: Finalize README configuration tables and defaults.
 - [x] **Release**: Tag v0.1.0 with a complete CHANGELOG.
@@ -26,15 +26,15 @@ Focus on ensuring reliability and maximizing test coverage before the v0.1.0 rel
 ### Phase 2: Comment Precision & Severity
 Improve the quality and specificity of individual inline comments.
 - [x] **Inline Severity Badges**: Include priority (critical/high/medium/low) in each inline comment body so reviewers can triage without cross-referencing the summary. Gemini already returns `priority` per review — surface it in the comment text (e.g., `**🔶 High** — <comment>`).
-- [ ] **Multi-Line Comment Ranges**: Replace single-position comments with precise start/end line ranges. Currently all comments pin to one diff position and GitHub renders ~4 lines of default context. Changes needed:
-    - Update the prompt JSON schema to request `startLineNumber`/`endLineNumber` instead of a single `lineNumber`.
-    - Map both endpoints through `adjustToReviewablePosition` to diff positions.
-    - Switch `ReviewComment` to use GitHub's multi-line fields (`start_line`/`line`, `start_side`/`side`).
-    - Update `createReview` to post multi-line comments via the GitHub API.
+- [x] **Multi-Line Comment Ranges**: Replace single-position comments with precise start/end line ranges.
+    - [x] Update the prompt JSON schema to request `startLineNumber`/`endLineNumber` instead of a single `lineNumber`.
+    - [x] Map both endpoints through `adjustToReviewablePosition` to diff positions.
+    - [x] Switch `ReviewComment` to use GitHub's multi-line fields (`start_line`/`line`, `start_side`/`side`).
+    - [x] Update `createReview` to post multi-line comments via the GitHub API.
 
 ### Phase 3: Context & Insight Quality
 Focus on optimizing *how* we present data to the model to extract better reviews.
-- [ ] **Golden Data Suite**: Create `benchmarks/` with static diffs to measure consistency.
+- [x] **Golden Data Suite**: Create `benchmarks/` with static diffs to measure consistency.
 - [ ] **Context Optimization**:
     - [x] Implemented PR Goal generation from commits and linked issues.
     - [ ] Experiment with context strategies (full file vs. chunks, dependency graphs) to improve signal-to-noise.
@@ -46,8 +46,8 @@ Focus on optimizing *how* we present data to the model to extract better reviews
 
 ### Phase 4: Reliability & Scale
 Address potential bottlenecks for larger repositories and higher loads.
-- [ ] **Large Diff Handling**: Implement intelligent chunking for diffs exceeding model context limits.
-- [ ] **Rate Limiting**: Add backoff/retry logic for GitHub and Gemini API rate limits.
+- [x] **Large Diff Handling**: Implement intelligent chunking for diffs exceeding model context limits.
+- [x] **Rate Limiting**: Add backoff/retry logic for GitHub and Gemini API rate limits.
 - [ ] **Configurable Thresholds**: Expose `MAX_COMMENTS` configuration (currently hard-capped).
 - [ ] **Observability**: Implement structured JSON logging for better debugging in Action logs.
 
@@ -62,6 +62,17 @@ Improve the user experience and security controls.
     - [ ] **Explicit Scope Control**: Allow users to define "Non-Critical Areas" or "Out of Scope" files in configuration to limit AI pedantry.
     - [ ] **Review Fatigue Prevention**: Limit the total number of reviews per PR/branch to encourage human closure on open threads.
     - [ ] **Contextual Severity Tuning**: Adjust the AI's "strictness" based on the PR's priority or lifecycle stage (e.g., "Draft" vs "Hotfix").
+
+### Review Quality Improvement Ideas
+Tracked via the benchmark framework (`bun run benchmark`). Baseline: **100% recall, 41% precision, 71% severity accuracy**.
+
+- [ ] **Stricter "no-nit" prompt guardrails**: The model still generates style suggestions and minor improvement comments despite the current instruction. Experiment with few-shot examples of ideal vs. rejected comments directly in the system prompt.
+- [ ] **Severity calibration via examples**: Severity accuracy sits at ~71%. Add 2-3 few-shot examples mapping real findings to correct priorities to anchor the model's severity judgement.
+- [ ] **Negative examples for clean code**: The clean-code case still produces false positives. Add an explicit instruction like "If all code is correct and safe, return an empty array — silence is a valid review."
+- [ ] **Context window budget tuning**: The global pass sends repo README + file structure + full diff. Measure whether trimming repo context (or removing it entirely) reduces noise without hurting recall on cross-file findings.
+- [ ] **Two-stage filtering**: After the AI generates comments, run a second cheap LLM pass (or heuristic) to filter out low-confidence / nit-style comments before posting. Measure precision gain vs. recall cost.
+- [ ] **Per-mode prompt specialization**: The `security` mode achieves 100% precision while `standard` mode is noisy. Investigate whether standard mode benefits from a tighter persona definition similar to security mode's focused scope.
+- [ ] **Expand benchmark suite**: Add cases for common false-positive patterns (e.g., idiomatic error handling the AI flags, test files it shouldn't review) to ensure prompt changes don't regress on those.
 
 ### Phase 6: Distribution & Optimization
 Optimize the action for faster execution and broader distribution.
