@@ -11,7 +11,8 @@
     "start": "bun run src/index.ts",
     "test": "bun test",
     "check": "bunx biome check --fix && bunx tsgo && bun test",
-    "e2e:local": "DRY_RUN=true LOCAL_EVENT_PATH=test/mocks/event.json LOCAL_PR_JSON_PATH=test/mocks/pr.json LOCAL_DIFF_PATH=test/mocks/diff.diff LOCAL_COMMITS_JSON_PATH=test/mocks/commits.json LOCAL_ISSUES_JSON_PATH=test/mocks/issues.json bun run scripts/local_e2e.ts"
+    "e2e:local": "DRY_RUN=true LOCAL_EVENT_PATH=test/mocks/event.json LOCAL_PR_JSON_PATH=test/mocks/pr.json LOCAL_DIFF_PATH=test/mocks/diff.diff LOCAL_COMMITS_JSON_PATH=test/mocks/commits.json LOCAL_ISSUES_JSON_PATH=test/mocks/issues.json bun run scripts/local_e2e.ts",
+    "benchmark": "bun run benchmarks/runner.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
