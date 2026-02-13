@@ -1,4 +1,5 @@
 import { type GenerativeModel, GoogleGenerativeAI } from '@google/generative-ai';
+import { type RetryOptions, withRetry } from './retry.js';
 
 export type AIReview = {
   lineNumber: number;
@@ -146,33 +147,39 @@ export function parsePRGoal(text: string): PRGoal {
 
 export class GeminiClient {
   private model: GenerativeModel;
+  private retryOptions?: RetryOptions;
 
-  constructor(apiKey: string, modelName: string) {
+  constructor(apiKey: string, modelName: string, retryOptions?: RetryOptions) {
     const genAI = new GoogleGenerativeAI(apiKey);
     this.model = genAI.getGenerativeModel({
       model: modelName,
       generationConfig: { responseMimeType: 'application/json' },
     });
+    this.retryOptions = retryOptions;
+  }
+
+  private async generate(prompt: string, label: string): Promise<string> {
+    const result = await withRetry(
+      () => this.model.generateContent(prompt),
+      label,
+      this.retryOptions,
+    );
+    const response = result?.response;
+    return response?.text ? response.text() : '';
   }
 
   async review(prompt: string): Promise<AIReview[]> {
-    const result = await this.model.generateContent(prompt);
-    const response = result?.response;
-    const text = response?.text ? response.text() : '';
-    return parseReviews(text || '');
+    const text = await this.generate(prompt, 'gemini:review');
+    return parseReviews(text);
   }
 
   async reviewGlobal(prompt: string): Promise<AIGlobalReview> {
-    const result = await this.model.generateContent(prompt);
-    const response = result?.response;
-    const text = response?.text ? response.text() : '';
-    return parseGlobalReview(text || '');
+    const text = await this.generate(prompt, 'gemini:reviewGlobal');
+    return parseGlobalReview(text);
   }
 
   async generatePRGoal(prompt: string): Promise<PRGoal> {
-    const result = await this.model.generateContent(prompt);
-    const response = result?.response;
-    const text = response?.text ? response.text() : '';
-    return parsePRGoal(text || '');
+    const text = await this.generate(prompt, 'gemini:generatePRGoal');
+    return parsePRGoal(text);
   }
 }

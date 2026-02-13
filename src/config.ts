@@ -14,6 +14,8 @@ export type Config = {
   maxLinesPerHunk: number;
   globalReview: boolean;
   globalMaxLines: number;
+  retryMaxAttempts: number;
+  retryInitialDelayMs: number;
 };
 
 function parseList(value: string | undefined): string[] {
@@ -73,5 +75,7 @@ export function loadConfig(): Config {
     maxLinesPerHunk: parseNumber(process.env.MAX_LINES_PER_HUNK, 500),
     globalReview: parseBoolean(process.env.GLOBAL_REVIEW, true),
     globalMaxLines: parseNumber(process.env.GLOBAL_MAX_LINES, 2000),
+    retryMaxAttempts: parseNumber(process.env.RETRY_MAX_ATTEMPTS, 4),
+    retryInitialDelayMs: parseNumber(process.env.RETRY_INITIAL_DELAY_MS, 1000),
   };
 }

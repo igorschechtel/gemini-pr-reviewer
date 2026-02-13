@@ -23,6 +23,7 @@ import {
   type ReviewComment,
 } from './github.js';
 import { buildGlobalPrompt, buildGoalPrompt, buildPrompt } from './prompt.js';
+import type { RetryOptions } from './retry.js';
 import { pLimit } from './util.js';
 
 const MAX_COMMENTS = 100;
@@ -64,6 +65,7 @@ export type Dependencies = {
   createGeminiClient: (
     apiKey: string,
     modelName: string,
+    retryOptions?: RetryOptions,
   ) => {
     review: (prompt: string) => Promise<AIReview[]>;
     reviewGlobal: (prompt: string) => Promise<AIGlobalReview>;
@@ -228,7 +230,10 @@ export async function run(params: {
   };
   const filteredFiles = filterDiffFiles(parsedFiles, diffOptions);
 
-  const gemini = deps.createGeminiClient(config.geminiApiKey, config.geminiModel);
+  const gemini = deps.createGeminiClient(config.geminiApiKey, config.geminiModel, {
+    maxAttempts: config.retryMaxAttempts,
+    initialDelayMs: config.retryInitialDelayMs,
+  });
 
   console.log('Fetching PR context...');
   const [commits, repoStructure, readme] = await Promise.all([
@@ -450,7 +455,8 @@ async function main(): Promise<void> {
     createReview,
     postIssueComment,
     addCommentReaction,
-    createGeminiClient: (apiKey, modelName) => new GeminiClient(apiKey, modelName),
+    createGeminiClient: (apiKey, modelName, retryOptions) =>
+      new GeminiClient(apiKey, modelName, retryOptions),
     fetchFileContent,
     fetchRepoFileStructure,
   };

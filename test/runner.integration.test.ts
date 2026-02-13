@@ -29,6 +29,8 @@ function makeConfig(): Config {
     maxLinesPerHunk: 500,
     globalReview: true,
     globalMaxLines: 2000,
+    retryMaxAttempts: 4,
+    retryInitialDelayMs: 1000,
   };
 }
 

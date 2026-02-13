@@ -1,3 +1,5 @@
+import { withRetry } from './retry.js';
+
 export type PRDetails = {
   owner: string;
   repo: string;
@@ -29,35 +31,41 @@ function buildHeaders(token: string, accept?: string) {
 }
 
 async function requestJson<T>(path: string, token: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      ...buildHeaders(token),
-      ...(options.headers || {}),
-    },
-  });
+  return withRetry(async () => {
+    const response = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: {
+        ...buildHeaders(token),
+        ...(options.headers || {}),
+      },
+    });
 
-  if (!response.ok) {
-    const body = await response.text();
-    const error = new Error(`GitHub API error ${response.status}: ${body}`);
-    (error as Error & { status: number }).status = response.status;
-    throw error;
-  }
+    if (!response.ok) {
+      const body = await response.text();
+      const error = new Error(`GitHub API error ${response.status}: ${body}`);
+      (error as Error & { status: number }).status = response.status;
+      throw error;
+    }
 
-  return (await response.json()) as T;
+    return (await response.json()) as T;
+  }, `github:${path}`);
 }
 
 async function requestText(path: string, token: string, accept: string): Promise<string> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    headers: buildHeaders(token, accept),
-  });
+  return withRetry(async () => {
+    const response = await fetch(`${API_BASE}${path}`, {
+      headers: buildHeaders(token, accept),
+    });
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`GitHub API error ${response.status}: ${body}`);
-  }
+    if (!response.ok) {
+      const body = await response.text();
+      const error = new Error(`GitHub API error ${response.status}: ${body}`);
+      (error as Error & { status: number }).status = response.status;
+      throw error;
+    }
 
-  return await response.text();
+    return await response.text();
+  }, `github:${path}`);
 }
 
 interface GitHubPR {
