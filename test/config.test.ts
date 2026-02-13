@@ -21,6 +21,8 @@ describe('Configuration Loading', () => {
     delete process.env.MAX_LINES_PER_HUNK;
     delete process.env.GLOBAL_REVIEW;
     delete process.env.GLOBAL_MAX_LINES;
+    delete process.env.RETRY_MAX_ATTEMPTS;
+    delete process.env.RETRY_INITIAL_DELAY_MS;
   });
 
   afterEach(() => {
@@ -90,6 +92,34 @@ describe('Configuration Loading', () => {
     process.env.GLOBAL_REVIEW = 'false';
     const config = loadConfig();
     expect(config.globalReview).toBe(false);
+  });
+
+  test('parses retry config with defaults', () => {
+    process.env.GEMINI_API_KEY = 'key';
+    process.env.GITHUB_TOKEN = 'token';
+    const config = loadConfig();
+    expect(config.retryMaxAttempts).toBe(4);
+    expect(config.retryInitialDelayMs).toBe(1000);
+  });
+
+  test('parses custom retry config from env vars', () => {
+    process.env.GEMINI_API_KEY = 'key';
+    process.env.GITHUB_TOKEN = 'token';
+    process.env.RETRY_MAX_ATTEMPTS = '6';
+    process.env.RETRY_INITIAL_DELAY_MS = '2000';
+    const config = loadConfig();
+    expect(config.retryMaxAttempts).toBe(6);
+    expect(config.retryInitialDelayMs).toBe(2000);
+  });
+
+  test('falls back to defaults for invalid retry config', () => {
+    process.env.GEMINI_API_KEY = 'key';
+    process.env.GITHUB_TOKEN = 'token';
+    process.env.RETRY_MAX_ATTEMPTS = 'invalid';
+    process.env.RETRY_INITIAL_DELAY_MS = '-1';
+    const config = loadConfig();
+    expect(config.retryMaxAttempts).toBe(4);
+    expect(config.retryInitialDelayMs).toBe(1000);
   });
 
   test('parses review mode correctly and falls back to standard', () => {
