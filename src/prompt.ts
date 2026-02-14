@@ -90,6 +90,7 @@ export function buildPrompt(params: {
     'If there are no suggestions, return: {"reviews": []}',
     'Use GitHub Markdown in comments.',
     'IMPORTANT: Never suggest adding comments to the code.',
+    'IMPORTANT: Only report issues that represent real bugs, security vulnerabilities, or significant performance problems. Do NOT report style suggestions, minor improvements, best-practice nits, or informational observations. If the code is correct and safe, return an empty reviews array.',
     'The lineNumber must reference the diff line numbers shown at the left.',
     'Only use line numbers for added (+) or context (space) lines.',
     'Do not comment on deleted (-) lines or hunk headers (@@).',
